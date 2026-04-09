@@ -18,7 +18,11 @@
     "mods",
     "electron"
   ],
-  "author": "",
+  "homepage": "https://github.com/JLSkyzer/ckanrework",
+  "author": {
+    "name": "JLSkyzer",
+    "email": "jlskyzer@users.noreply.github.com"
+  },
   "license": "MIT",
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",
