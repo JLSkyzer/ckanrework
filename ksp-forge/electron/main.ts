@@ -1,6 +1,13 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+import { app, BrowserWindow, shell } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { DatabaseService } from './services/database'
+import { MetaSyncService } from './services/meta-sync'
+import { SpaceDockService } from './services/spacedock'
+import { ResolverService } from './services/resolver'
+import { InstallerService } from './services/installer'
+import { ProfileService } from './services/profile'
+import { registerIpcHandlers } from './ipc-handlers'
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -43,7 +50,20 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.on('ping', () => console.log('pong'))
+  const userData = app.getPath('userData')
+  const dbPath = join(userData, 'ksp-forge.db')
+  const repoPath = join(userData, 'ckan-meta')
+
+  const db = new DatabaseService(dbPath)
+  db.init()
+
+  const metaSync = new MetaSyncService(repoPath, db)
+  const spaceDock = new SpaceDockService(db)
+  const resolver = new ResolverService(db)
+  const installer = new InstallerService(db)
+  const profile = new ProfileService(db)
+
+  registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile })
 
   createWindow()
 

@@ -1,24 +1,54 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
 const api = {
-  // Placeholder — will be filled out in later tasks
+  mods: {
+    getAll: () => ipcRenderer.invoke('mods:getAll'),
+    get: (identifier: string) => ipcRenderer.invoke('mods:get', identifier),
+    search: (query: string) => ipcRenderer.invoke('mods:search', query),
+    getVersions: (identifier: string) => ipcRenderer.invoke('mods:getVersions', identifier),
+    getCount: () => ipcRenderer.invoke('mods:getCount'),
+  },
+  spacedock: {
+    fetch: (identifier: string) => ipcRenderer.invoke('spacedock:fetch', identifier),
+  },
+  resolver: {
+    resolve: (identifiers: string[], kspVersion: string, profileId?: string) =>
+      ipcRenderer.invoke('resolver:resolve', identifiers, kspVersion, profileId),
+  },
+  installer: {
+    install: (item: any, kspPath: string, profileId: string) =>
+      ipcRenderer.invoke('installer:install', item, kspPath, profileId),
+    uninstall: (profileId: string, identifier: string, kspPath: string) =>
+      ipcRenderer.invoke('installer:uninstall', profileId, identifier, kspPath),
+  },
+  profiles: {
+    getAll: () => ipcRenderer.invoke('profiles:getAll'),
+    get: (id: string) => ipcRenderer.invoke('profiles:get', id),
+    create: (name: string, kspPath: string) => ipcRenderer.invoke('profiles:create', name, kspPath),
+    delete: (id: string) => ipcRenderer.invoke('profiles:delete', id),
+    clone: (sourceId: string, newName: string) => ipcRenderer.invoke('profiles:clone', sourceId, newName),
+    export: (profileId: string) => ipcRenderer.invoke('profiles:export', profileId),
+    validatePath: (kspPath: string) => ipcRenderer.invoke('profiles:validatePath', kspPath),
+    getInstalled: (profileId: string) => ipcRenderer.invoke('profiles:getInstalled', profileId),
+  },
+  meta: {
+    sync: () => ipcRenderer.invoke('meta:sync'),
+    getLastSync: () => ipcRenderer.invoke('meta:getLastSync'),
+  },
+  dialog: {
+    selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
+  },
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+export type ElectronAPI = typeof api
+
 if (process.contextIsolated) {
   try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
+    contextBridge.exposeInMainWorld('electronAPI', api)
   } catch (error) {
     console.error(error)
   }
 } else {
   // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
+  window.electronAPI = api
 }
