@@ -7,6 +7,7 @@ import { SpaceDockService } from './services/spacedock'
 import { ResolverService } from './services/resolver'
 import { InstallerService } from './services/installer'
 import { ProfileService } from './services/profile'
+import { ImageScraperService } from './services/image-scraper'
 import { registerIpcHandlers } from './ipc-handlers'
 
 function createWindow(): void {
@@ -62,8 +63,9 @@ app.whenReady().then(() => {
   const resolver = new ResolverService(db)
   const installer = new InstallerService(db)
   const profile = new ProfileService(db)
+  const imageScraper = new ImageScraperService(db)
 
-  registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile })
+  registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile, imageScraper })
 
   createWindow()
 

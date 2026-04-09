@@ -13,6 +13,9 @@ const api = {
     fetch: (identifier: string) => ipcRenderer.invoke('spacedock:fetch', identifier),
     fetchBatch: (identifiers: string[]) => ipcRenderer.invoke('spacedock:fetchBatch', identifiers) as Promise<Record<string, any>>,
   },
+  images: {
+    scrape: (identifier: string) => ipcRenderer.invoke('images:scrape', identifier) as Promise<string[]>,
+  },
   resolver: {
     resolve: (identifiers: string[], kspVersion: string, profileId?: string) =>
       ipcRenderer.invoke('resolver:resolve', identifiers, kspVersion, profileId),

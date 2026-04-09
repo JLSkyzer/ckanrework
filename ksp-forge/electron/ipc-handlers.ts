@@ -1,5 +1,6 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
 import type { SpaceDockCacheRow } from './types'
+import type { ImageScraperService } from './services/image-scraper'
 import type { DatabaseService } from './services/database'
 import type { MetaSyncService } from './services/meta-sync'
 import type { SpaceDockService } from './services/spacedock'
@@ -16,10 +17,11 @@ interface Services {
   resolver: ResolverService
   installer: InstallerService
   profile: ProfileService
+  imageScraper: ImageScraperService
 }
 
 export function registerIpcHandlers(services: Services): void {
-  const { db, metaSync, spaceDock, resolver, installer, profile } = services
+  const { db, metaSync, spaceDock, resolver, installer, profile, imageScraper } = services
 
   // --- Mods ---
   ipcMain.handle('mods:getAll', () => {
@@ -57,6 +59,11 @@ export function registerIpcHandlers(services: Services): void {
     const obj: Record<string, SpaceDockCacheRow> = {}
     for (const [k, v] of map) obj[k] = v
     return obj
+  })
+
+  // --- Image Scraper ---
+  ipcMain.handle('images:scrape', async (_event, identifier: string) => {
+    return imageScraper.scrapeModImages(identifier)
   })
 
   // --- Resolver ---

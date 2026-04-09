@@ -60,6 +60,8 @@ export function ModDetail() {
   const [activeTab, setActiveTab] = useState<Tab>('description')
   const [loadingMeta, setLoadingMeta] = useState(true)
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
+  const [scrapedImages, setScrapedImages] = useState<string[]>([])
+  const [loadingImages, setLoadingImages] = useState(false)
 
   const mod = useMemo(
     () => mods.find((m) => m.identifier === selectedModId) ?? null,
@@ -101,21 +103,24 @@ export function ModDetail() {
     return renderDescription(sdData, mod)
   }, [sdData, mod])
 
-  const screenshots = useMemo(() => {
-    const imgs: string[] = []
-    // Add banner as first image
-    if (sdData?.background_url) imgs.push(sdData.background_url)
-    // Extract from description HTML
-    if (sdData?.description_html) {
-      imgs.push(...extractImages(sdData.description_html))
-    } else if (sdData?.description) {
-      // Markdown descriptions may have ![](url) images
-      const mdImgs = sdData.description.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)
-      for (const m of mdImgs) imgs.push(m[1])
-    }
-    // Deduplicate
-    return [...new Set(imgs)]
+  // Quick local extraction for tab count (fast, no network)
+  const quickImageCount = useMemo(() => {
+    let count = 0
+    if (sdData?.background_url) count++
+    if (sdData?.description_html) count += extractImages(sdData.description_html).length
+    return count
   }, [sdData])
+
+  // Full scrape triggered when Screenshots tab is opened
+  useEffect(() => {
+    if (activeTab === 'screenshots' && mod && scrapedImages.length === 0 && !loadingImages) {
+      setLoadingImages(true)
+      window.electronAPI.images.scrape(mod.identifier).then((imgs) => {
+        setScrapedImages(imgs)
+        setLoadingImages(false)
+      }).catch(() => setLoadingImages(false))
+    }
+  }, [activeTab, mod?.identifier])
 
   if (!mod) {
     return (
@@ -136,9 +141,15 @@ export function ModDetail() {
 
   const downloads = sdData?.downloads ?? null
 
+  const screenshotLabel = scrapedImages.length > 0
+    ? `Screenshots (${scrapedImages.length})`
+    : quickImageCount > 0
+      ? `Screenshots (~${quickImageCount}+)`
+      : 'Screenshots'
+
   const TABS: { id: Tab; label: string }[] = [
     { id: 'description', label: 'Description' },
-    ...(screenshots.length > 0 ? [{ id: 'screenshots' as Tab, label: `Screenshots (${screenshots.length})` }] : []),
+    { id: 'screenshots', label: screenshotLabel },
     { id: 'changelog', label: 'Changelog' },
     { id: 'dependencies', label: 'Dependencies' },
   ]
@@ -259,23 +270,35 @@ export function ModDetail() {
                   )}
 
                   {activeTab === 'screenshots' && (
-                    <div className="grid grid-cols-2 gap-3">
-                      {screenshots.map((src, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setLightboxImg(src)}
-                          className="rounded-lg overflow-hidden border border-[rgba(99,102,241,0.1)] hover:border-[rgba(99,102,241,0.4)] transition-colors cursor-pointer group"
-                        >
-                          <img
-                            src={src}
-                            alt={`Screenshot ${i + 1}`}
-                            className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-200"
-                            loading="lazy"
-                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }}
-                          />
-                        </button>
-                      ))}
-                    </div>
+                    loadingImages ? (
+                      <div className="py-10 text-center">
+                        <p className="text-[rgba(99,102,241,0.8)] animate-pulse">
+                          Scanning homepage, GitHub, SpaceDock for images...
+                        </p>
+                      </div>
+                    ) : scrapedImages.length === 0 ? (
+                      <p className="text-[rgba(148,163,184,0.6)] text-sm py-4">
+                        No screenshots found.
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        {scrapedImages.map((src, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setLightboxImg(src)}
+                            className="rounded-lg overflow-hidden border border-[rgba(99,102,241,0.1)] hover:border-[rgba(99,102,241,0.4)] transition-colors cursor-pointer group"
+                          >
+                            <img
+                              src={src}
+                              alt={`Screenshot ${i + 1}`}
+                              className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-200"
+                              loading="lazy"
+                              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )
                   )}
 
                   {activeTab === 'changelog' && (
