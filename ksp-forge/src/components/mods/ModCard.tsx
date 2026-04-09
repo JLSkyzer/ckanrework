@@ -25,18 +25,34 @@ export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, o
   )
 
   useEffect(() => {
-    if (!sdData?.background_url) return
     if (imageUrlCache.has(mod.identifier)) {
       setCachedImageUrl(imageUrlCache.get(mod.identifier) ?? null)
       return
     }
+
     let cancelled = false
-    api.spacedock.getCachedImageUrl(mod.identifier).then((url) => {
-      if (!cancelled) {
-        imageUrlCache.set(mod.identifier, url)
-        setCachedImageUrl(url)
+
+    // Try SpaceDock cached image first
+    if (sdData?.background_url) {
+      api.spacedock.getCachedImageUrl(mod.identifier).then((url) => {
+        if (!cancelled && url) {
+          imageUrlCache.set(mod.identifier, url)
+          setCachedImageUrl(url)
+        }
+      })
+    } else {
+      // No SpaceDock banner — try first forum image if mod has a forum link
+      const resources = mod.resources ? JSON.parse(mod.resources) : {}
+      if (resources.homepage?.includes('forum.kerbalspaceprogram.com')) {
+        api.images.firstForumImage(mod.identifier).then((url) => {
+          if (!cancelled && url) {
+            imageUrlCache.set(mod.identifier, url)
+            setCachedImageUrl(url)
+          }
+        }).catch(() => {})
       }
-    })
+    }
+
     return () => { cancelled = true }
   }, [mod.identifier, sdData?.background_url])
 
