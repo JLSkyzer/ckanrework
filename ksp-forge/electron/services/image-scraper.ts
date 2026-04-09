@@ -3,18 +3,43 @@ import type { DatabaseService } from './database'
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 const FETCH_TIMEOUT = 10000
 
-// Patterns to exclude (badges, icons, avatars, tracking pixels)
+// Patterns to exclude (badges, icons, avatars, tracking pixels, forum UI)
 const EXCLUDE_PATTERNS = [
   /badge/i, /shield\.io/i, /img\.shields/i, /spacer/i,
-  /1x1/, /avatar/i, /favicon/i, /icon/i, /logo.*\.png$/i,
-  /\.svg(\?|$)/i, /emoji/i, /smilie/i, /smiley/i,
+  /1x1/, /avatar/i, /favicon/i, /\.ico(\?|$)/i,
+  /icon/i, /logo/i, /\.svg(\?|$)/i,
+  /emoji/i, /smilie/i, /smiley/i, /emoticon/i,
   /pixel\.gif/i, /clear\.gif/i, /blank\.gif/i,
-  /gravatar/i, /user_avatar/i, /profile/i,
-  /button/i, /banner_ad/i, /ads\//i,
+  /gravatar/i, /user_avatar/i, /profile_photo/i,
+  /button/i, /banner_ad/i, /ads\//i, /advert/i,
+  /spinner/i, /loading/i, /ajax/i,
+  // Forum-specific
+  /statusicon/i, /rating/i, /rank/i, /star/i,
+  /forum.*\/images\//i, /themes\//i, /styles\//i,
+  /css\//i, /ui\//i, /assets\/icons/i,
+  /arrow/i, /caret/i, /chevron/i, /close/i,
+  /attach/i, /paperclip/i, /quote/i,
+  /like/i, /dislike/i, /thumb/i, /vote/i,
+  /social/i, /share/i, /twitter/i, /facebook/i,
+  /discord/i, /patreon/i, /donate/i, /paypal/i,
+  /flag_/i, /country/i, /locale/i,
+  /\.gif(\?|$)/i, // Most GIFs are reaction images or animations, not screenshots
+  /\bx\b.*\bpng/i, // Things like "16x16.png"
+  /online_icon/i, /offline_icon/i,
 ]
 
+// Minimum filename length (to exclude things like "a.png", "bg.jpg")
+const MIN_FILENAME_LENGTH = 6
+
 function shouldInclude(src: string): boolean {
-  return !EXCLUDE_PATTERNS.some(p => p.test(src))
+  if (EXCLUDE_PATTERNS.some(p => p.test(src))) return false
+  // Check filename isn't too short (usually icons)
+  try {
+    const url = new URL(src)
+    const filename = url.pathname.split('/').pop() || ''
+    if (filename.length < MIN_FILENAME_LENGTH) return false
+  } catch { /* ignore */ }
+  return true
 }
 
 function extractImagesFromHtml(html: string, baseUrl: string): string[] {

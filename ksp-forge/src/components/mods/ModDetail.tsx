@@ -283,19 +283,7 @@ export function ModDetail() {
                     ) : (
                       <div className="grid grid-cols-2 gap-3">
                         {scrapedImages.map((src, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setLightboxImg(src)}
-                            className="rounded-lg overflow-hidden border border-[rgba(99,102,241,0.1)] hover:border-[rgba(99,102,241,0.4)] transition-colors cursor-pointer group"
-                          >
-                            <img
-                              src={src}
-                              alt={`Screenshot ${i + 1}`}
-                              className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-200"
-                              loading="lazy"
-                              onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }}
-                            />
-                          </button>
+                          <ScreenshotThumb key={i} src={src} onClick={() => setLightboxImg(src)} />
                         ))}
                       </div>
                     )
@@ -428,6 +416,36 @@ export function ModDetail() {
         </div>
       </div>
     </div>
+  )
+}
+
+const MIN_IMG_WIDTH = 150
+const MIN_IMG_HEIGHT = 100
+
+function ScreenshotThumb({ src, onClick }: { src: string; onClick: () => void }) {
+  const [visible, setVisible] = useState(true)
+
+  if (!visible) return null
+
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-lg overflow-hidden border border-[rgba(99,102,241,0.1)] hover:border-[rgba(99,102,241,0.4)] transition-colors cursor-pointer group"
+    >
+      <img
+        src={src}
+        alt="Screenshot"
+        className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-200"
+        loading="lazy"
+        onLoad={(e) => {
+          const img = e.target as HTMLImageElement
+          if (img.naturalWidth < MIN_IMG_WIDTH || img.naturalHeight < MIN_IMG_HEIGHT) {
+            setVisible(false)
+          }
+        }}
+        onError={() => setVisible(false)}
+      />
+    </button>
   )
 }
 
