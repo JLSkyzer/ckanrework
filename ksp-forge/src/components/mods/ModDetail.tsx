@@ -62,6 +62,7 @@ export function ModDetail() {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null)
   const [scrapedImages, setScrapedImages] = useState<string[]>([])
   const [loadingImages, setLoadingImages] = useState(false)
+  const [forumDescription, setForumDescription] = useState<string | null>(null)
 
   const mod = useMemo(
     () => mods.find((m) => m.identifier === selectedModId) ?? null,
@@ -78,6 +79,8 @@ export function ModDetail() {
     setSdData(null)
     setVersions([])
 
+    setForumDescription(null)
+
     Promise.all([
       mod.spacedock_id ? fetchSpaceDockData(mod.identifier) : Promise.resolve(null),
       fetchModVersions(mod.identifier),
@@ -85,6 +88,14 @@ export function ModDetail() {
       setSdData(sd)
       setVersions(vers)
       setLoadingMeta(false)
+
+      // If SpaceDock description is short/missing, try forum
+      const sdDesc = sd?.description || sd?.description_html || ''
+      if (sdDesc.length < 200) {
+        window.electronAPI?.images?.forumDescription(mod.identifier).then((html) => {
+          if (html) setForumDescription(html)
+        }).catch(() => {})
+      }
     })
   }, [mod?.identifier])
 
@@ -100,8 +111,10 @@ export function ModDetail() {
 
   const descriptionHtml = useMemo(() => {
     if (!mod) return ''
+    // Prefer forum description (first post, always the most complete)
+    if (forumDescription) return DOMPurify.sanitize(forumDescription)
     return renderDescription(sdData, mod)
-  }, [sdData, mod])
+  }, [sdData, mod, forumDescription])
 
   // Quick local extraction for tab count (fast, no network)
   const quickImageCount = useMemo(() => {

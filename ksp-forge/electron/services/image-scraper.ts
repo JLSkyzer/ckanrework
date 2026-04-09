@@ -1,3 +1,4 @@
+import { BrowserWindow } from 'electron'
 import type { DatabaseService } from './database'
 
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
@@ -20,6 +21,9 @@ const IMAGE_HOST_WHITELIST = [
   'drive.google.com',
   'dropbox.com',
   'i.redd.it', 'preview.redd.it',
+  // KSP Forum image hosting
+  'forum.kerbalspaceprogram.com/uploads',
+  'forum.kerbalspaceprogram.com/applications',
 ]
 
 // Patterns that are definitely NOT content images
@@ -70,9 +74,10 @@ function extractContentImages(html: string, baseUrl: string): string[] {
   // GitHub: class="markdown-body" or id="readme"
   // SpaceDock: class="mod-desc" or similar
   const contentPatterns = [
-    // KSP Forum / Invision
-    /data-role="commentContent"[^>]*>([\s\S]*?)<\/div>/gi,
+    // KSP Forum / Invision Community — first post content
+    /data-role="commentContent"[^>]*>([\s\S]*?)(?=<\/div>\s*<\/div>\s*(?:<aside|<ul\s+class="ipsList_reset))/i,
     /class="[^"]*cPost_contentWrap[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gi,
+    /class="[^"]*ipsType_richText\s+ipsContained[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
     /class="[^"]*ipsType_richText[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
     /class="[^"]*entry-content[^"]*"[^>]*>([\s\S]*?)<\/div>/gi,
     // GitHub
@@ -98,19 +103,24 @@ function extractContentImages(html: string, baseUrl: string): string[] {
   const searchHtml = contentHtml || html
   const useStrictMode = !contentHtml // No content area found = be strict
 
-  // Extract <img> src
-  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi
+  // Extract <img> tags — prefer data-src (lazy-loaded real URL) over src
+  const imgRegex = /<img[^>]*>/gi
   let match
   while ((match = imgRegex.exec(searchHtml)) !== null) {
-    let src = resolveUrl(match[0].includes('data-src') ? '' : match[1], baseUrl)
-    if (!src) continue
+    const tag = match[0]
 
-    // Also check for data-src (lazy loaded images, common on forums)
-    const dataSrcMatch = match[0].match(/data-src=["']([^"']+)["']/)
+    // Prefer data-src for lazy-loaded images (common on Invision Community forums)
+    const dataSrcMatch = tag.match(/data-src=["']([^"']+)["']/)
+    const srcMatch = tag.match(/\bsrc=["']([^"']+)["']/)
+
+    let src: string | null = null
     if (dataSrcMatch) {
-      const dataSrc = resolveUrl(dataSrcMatch[1], baseUrl)
-      if (dataSrc) src = dataSrc // prefer data-src (actual image URL)
+      src = resolveUrl(dataSrcMatch[1], baseUrl)
     }
+    if (!src && srcMatch) {
+      src = resolveUrl(srcMatch[1], baseUrl)
+    }
+    if (!src) continue
 
     if (useStrictMode) {
       // Only allow images from trusted hosting sites
@@ -149,6 +159,7 @@ function resolveUrl(src: string, baseUrl: string): string | null {
 export class ImageScraperService {
   private db: DatabaseService
   private cache = new Map<string, { images: string[]; fetchedAt: number }>()
+  private descriptionCache = new Map<string, { html: string; fetchedAt: number }>()
 
   constructor(db: DatabaseService) {
     this.db = db
@@ -200,13 +211,55 @@ export class ImageScraperService {
     return unique
   }
 
+  async scrapeForumDescription(modIdentifier: string): Promise<string | null> {
+    // Check cache
+    const cached = this.descriptionCache.get(modIdentifier)
+    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
+      return cached.html
+    }
+
+    const mod = this.db.getMod(modIdentifier)
+    if (!mod) return null
+
+    const resources: Record<string, string> = mod.resources ? JSON.parse(mod.resources) : {}
+    if (!resources.homepage?.includes('forum.kerbalspaceprogram.com')) return null
+
+    const html = await this.fetchWithBrowser(resources.homepage)
+    if (!html) return null
+
+    // Extract first post content
+    const patterns = [
+      /data-role="commentContent"[^>]*>([\s\S]*?)(?=<\/div>\s*<\/div>\s*(?:<aside|<ul\s+class="ipsList_reset))/i,
+      /class="[^"]*ipsType_richText\s+ipsContained[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+      /class="[^"]*ipsType_richText[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
+    ]
+
+    for (const pattern of patterns) {
+      const match = pattern.exec(html)
+      if (match && match[1] && match[1].length > 100) {
+        const content = match[1].trim()
+        this.descriptionCache.set(modIdentifier, { html: content, fetchedAt: Date.now() })
+        return content
+      }
+    }
+
+    return null
+  }
+
   private async fetchPage(url: string): Promise<string | null> {
+    // KSP Forum uses Cloudflare — must use Electron BrowserWindow
+    if (url.includes('forum.kerbalspaceprogram.com')) {
+      return this.fetchWithBrowser(url)
+    }
+
     try {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT)
       const response = await fetch(url, {
         signal: controller.signal,
-        headers: { 'User-Agent': 'KSP-Forge/1.0 (mod manager)' },
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        },
         redirect: 'follow',
       })
       clearTimeout(timeout)
@@ -217,5 +270,58 @@ export class ImageScraperService {
     } catch {
       return null
     }
+  }
+
+  private fetchWithBrowser(url: string): Promise<string | null> {
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        try { win.close() } catch {}
+        resolve(null)
+      }, 20000)
+
+      const win = new BrowserWindow({
+        width: 1280,
+        height: 900,
+        show: false,
+        webPreferences: {
+          contextIsolation: true,
+          nodeIntegration: false,
+          sandbox: true,
+        },
+      })
+
+      let resolved = false
+
+      win.webContents.on('did-finish-load', async () => {
+        // Wait a bit for Cloudflare challenge to complete and JS to render
+        await new Promise(r => setTimeout(r, 3000))
+
+        try {
+          const html = await win.webContents.executeJavaScript('document.documentElement.outerHTML')
+          if (!resolved) {
+            resolved = true
+            clearTimeout(timeout)
+            win.close()
+            // Check if we actually got past Cloudflare
+            if (html.includes('commentContent') || html.includes('ipsType_richText') || html.length > 20000) {
+              resolve(html)
+            } else {
+              // Still on challenge page, wait longer and retry once
+              resolve(null)
+            }
+          }
+        } catch {
+          if (!resolved) { resolved = true; clearTimeout(timeout); win.close(); resolve(null) }
+        }
+      })
+
+      win.webContents.on('did-fail-load', () => {
+        if (!resolved) { resolved = true; clearTimeout(timeout); win.close(); resolve(null) }
+      })
+
+      win.loadURL(url).catch(() => {
+        if (!resolved) { resolved = true; clearTimeout(timeout); resolve(null) }
+      })
+    })
   }
 }

@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import type { SpaceDockCacheRow } from '../types'
 import type { DatabaseService } from './database'
 
@@ -24,9 +26,35 @@ interface SpaceDockModResponse {
 export class SpaceDockService {
   private db: DatabaseService
   private inflight = new Map<string, Promise<SpaceDockCacheRow | null>>()
+  private imageCacheDir: string
 
-  constructor(db: DatabaseService) {
+  constructor(db: DatabaseService, imageCacheDir: string) {
     this.db = db
+    this.imageCacheDir = imageCacheDir
+    fs.mkdirSync(imageCacheDir, { recursive: true })
+  }
+
+  async getCachedImageUrl(modIdentifier: string): Promise<string | null> {
+    const cached = this.db.getSpaceDockCache(modIdentifier)
+    if (!cached?.background_url) return null
+
+    const fileName = `${cached.spacedock_id}.jpg`
+    const filePath = path.join(this.imageCacheDir, fileName)
+
+    if (fs.existsSync(filePath)) {
+      return `file://${filePath.replace(/\\/g, '/')}`
+    }
+
+    // Download and cache
+    try {
+      const response = await fetch(cached.background_url)
+      if (!response.ok) return cached.background_url
+      const buffer = Buffer.from(await response.arrayBuffer())
+      fs.writeFileSync(filePath, buffer)
+      return `file://${filePath.replace(/\\/g, '/')}`
+    } catch {
+      return cached.background_url // fallback to remote URL
+    }
   }
 
   async fetchModData(modIdentifier: string): Promise<SpaceDockCacheRow | null> {

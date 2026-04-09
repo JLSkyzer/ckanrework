@@ -73,6 +73,10 @@ export function registerIpcHandlers(services: Services): void {
     return imageScraper.scrapeModImages(identifier)
   })
 
+  ipcMain.handle('images:forumDescription', async (_event, identifier: string) => {
+    return imageScraper.scrapeForumDescription(identifier)
+  })
+
   // --- Resolver ---
   ipcMain.handle('resolver:resolve', (_event, identifiers: string[], kspVersion: string, profileId?: string) => {
     return resolver.resolve(identifiers, kspVersion, profileId)

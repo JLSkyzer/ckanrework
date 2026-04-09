@@ -1,8 +1,12 @@
-import { memo, useCallback } from 'react'
+import { memo, useCallback, useEffect, useState } from 'react'
 import type { ModRow } from '../../../electron/types'
 import { useModStore } from '../../stores/mod-store'
 import { useUiStore } from '../../stores/ui-store'
 import { formatDownloads } from '../../lib/format'
+import { api } from '../../lib/ipc'
+
+// Module-level cache for resolved image URLs to avoid repeated IPC calls
+const imageUrlCache = new Map<string, string | null>()
 
 interface ModCardProps {
   mod: ModRow
@@ -16,13 +20,32 @@ export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, o
   const { spacedockCache } = useModStore()
 
   const sdData = spacedockCache.get(mod.identifier) ?? null
+  const [cachedImageUrl, setCachedImageUrl] = useState<string | null>(
+    imageUrlCache.get(mod.identifier) ?? null
+  )
+
+  useEffect(() => {
+    if (!sdData?.background_url) return
+    if (imageUrlCache.has(mod.identifier)) {
+      setCachedImageUrl(imageUrlCache.get(mod.identifier) ?? null)
+      return
+    }
+    let cancelled = false
+    api.spacedock.getCachedImageUrl(mod.identifier).then((url) => {
+      if (!cancelled) {
+        imageUrlCache.set(mod.identifier, url)
+        setCachedImageUrl(url)
+      }
+    })
+    return () => { cancelled = true }
+  }, [mod.identifier, sdData?.background_url])
 
   const handleInstall = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     onInstall(mod.identifier)
   }, [mod.identifier, onInstall])
 
-  const bannerUrl = sdData?.background_url ?? null
+  const bannerUrl = cachedImageUrl ?? sdData?.background_url ?? null
   const downloads = sdData?.downloads ?? null
 
   return (
