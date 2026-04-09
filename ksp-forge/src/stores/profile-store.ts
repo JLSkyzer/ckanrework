@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { api } from '../lib/ipc'
+import { useInstallStore } from './install-store'
 import type { ProfileRow, InstalledModRow } from '../../electron/types'
 
 export interface ProfileSwitchResult {
@@ -62,8 +63,6 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
 
       // Auto-queue mods that need downloading
       if (result.needsDownload.length > 0) {
-        // Dynamically import to avoid circular dependency
-        const { useInstallStore } = await import('./install-store')
         useInstallStore.getState().requestInstall(result.needsDownload)
       }
 
