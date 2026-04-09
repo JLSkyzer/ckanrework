@@ -65,9 +65,11 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   // --- Installer ---
-  ipcMain.handle('installer:install', async (_event, item: any, kspPath: string, profileId: string) => {
+  ipcMain.handle('installer:install', async (_event, resolvedMod: any, kspPath: string, profileId: string) => {
     const tempDir = path.join(os.tmpdir(), 'ksp-forge-install')
-    await installer.installMod(item, kspPath, profileId, tempDir)
+    // Convert ResolvedMod to InstallPlanItem
+    const plan = installer.buildInstallPlan([resolvedMod])
+    await installer.installMod(plan[0], kspPath, profileId, tempDir)
     return { success: true }
   })
 
