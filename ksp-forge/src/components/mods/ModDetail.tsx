@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import type { ModVersionRow, SpaceDockCacheRow } from '../../../electron/types'
@@ -10,7 +10,29 @@ import { ModDependencies } from './ModDependencies'
 import { useInstall } from '../../hooks/use-install'
 import { InstallDialog } from '../install/InstallDialog'
 
-type Tab = 'description' | 'changelog' | 'dependencies'
+type Tab = 'description' | 'screenshots' | 'changelog' | 'dependencies'
+
+function extractImages(html: string): string[] {
+  const imgs: string[] = []
+  const regex = /<img[^>]+src=["']([^"']+)["']/gi
+  let match
+  while ((match = regex.exec(html)) !== null) {
+    const src = match[1]
+    // Filter out tiny icons, badges, spacers
+    if (
+      src &&
+      !src.includes('badge') &&
+      !src.includes('shield.io') &&
+      !src.includes('img.shields') &&
+      !src.includes('spacer') &&
+      !src.includes('1x1') &&
+      !src.endsWith('.svg')
+    ) {
+      imgs.push(src)
+    }
+  }
+  return imgs
+}
 
 function renderDescription(sdData: SpaceDockCacheRow | null, mod: { abstract: string | null }): string {
   if (sdData?.description_html) {
@@ -37,6 +59,7 @@ export function ModDetail() {
   const [versions, setVersions] = useState<ModVersionRow[]>([])
   const [activeTab, setActiveTab] = useState<Tab>('description')
   const [loadingMeta, setLoadingMeta] = useState(true)
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null)
 
   const mod = useMemo(
     () => mods.find((m) => m.identifier === selectedModId) ?? null,
@@ -78,6 +101,22 @@ export function ModDetail() {
     return renderDescription(sdData, mod)
   }, [sdData, mod])
 
+  const screenshots = useMemo(() => {
+    const imgs: string[] = []
+    // Add banner as first image
+    if (sdData?.background_url) imgs.push(sdData.background_url)
+    // Extract from description HTML
+    if (sdData?.description_html) {
+      imgs.push(...extractImages(sdData.description_html))
+    } else if (sdData?.description) {
+      // Markdown descriptions may have ![](url) images
+      const mdImgs = sdData.description.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)
+      for (const m of mdImgs) imgs.push(m[1])
+    }
+    // Deduplicate
+    return [...new Set(imgs)]
+  }, [sdData])
+
   if (!mod) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -99,6 +138,7 @@ export function ModDetail() {
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'description', label: 'Description' },
+    ...(screenshots.length > 0 ? [{ id: 'screenshots' as Tab, label: `Screenshots (${screenshots.length})` }] : []),
     { id: 'changelog', label: 'Changelog' },
     { id: 'dependencies', label: 'Dependencies' },
   ]
@@ -127,6 +167,27 @@ export function ModDetail() {
           onConfirm={confirmInstall}
           onCancel={cancelInstall}
         />
+      )}
+
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center cursor-pointer"
+          onClick={() => setLightboxImg(null)}
+        >
+          <img
+            src={lightboxImg}
+            alt="Screenshot"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setLightboxImg(null)}
+            className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
       )}
 
       {/* Scrollable content */}
@@ -195,6 +256,26 @@ export function ModDetail() {
                       className="prose-mod text-sm text-[rgba(226,232,240,0.85)] leading-relaxed"
                       dangerouslySetInnerHTML={{ __html: descriptionHtml }}
                     />
+                  )}
+
+                  {activeTab === 'screenshots' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {screenshots.map((src, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setLightboxImg(src)}
+                          className="rounded-lg overflow-hidden border border-[rgba(99,102,241,0.1)] hover:border-[rgba(99,102,241,0.4)] transition-colors cursor-pointer group"
+                        >
+                          <img
+                            src={src}
+                            alt={`Screenshot ${i + 1}`}
+                            className="w-full h-[180px] object-cover group-hover:scale-105 transition-transform duration-200"
+                            loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).parentElement!.style.display = 'none' }}
+                          />
+                        </button>
+                      ))}
+                    </div>
                   )}
 
                   {activeTab === 'changelog' && (

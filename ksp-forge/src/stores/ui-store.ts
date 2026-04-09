@@ -2,15 +2,32 @@ import { create } from 'zustand'
 
 export type ViewName = 'discover' | 'installed' | 'profiles' | 'settings' | 'mod-detail'
 
-interface UiState {
-  currentView: ViewName
-  previousView: ViewName | null
-  selectedModId: string | null
-  searchQuery: string
+interface FilterState {
   sortBy: 'name' | 'downloads' | 'updated'
   filterKspVersionMin: string
   filterKspVersionMax: string
   filterCompatibleOnly: boolean
+}
+
+const FILTERS_KEY = 'ksp-forge-filters'
+
+function loadFilters(): FilterState {
+  try {
+    const raw = localStorage.getItem(FILTERS_KEY)
+    if (raw) return JSON.parse(raw)
+  } catch { /* ignore */ }
+  return { sortBy: 'downloads', filterKspVersionMin: '', filterKspVersionMax: '', filterCompatibleOnly: false }
+}
+
+function saveFilters(f: FilterState) {
+  try { localStorage.setItem(FILTERS_KEY, JSON.stringify(f)) } catch { /* ignore */ }
+}
+
+interface UiState extends FilterState {
+  currentView: ViewName
+  previousView: ViewName | null
+  selectedModId: string | null
+  searchQuery: string
 
   setView: (view: ViewName) => void
   setSelectedMod: (id: string | null) => void
@@ -24,15 +41,14 @@ interface UiState {
   goBack: () => void
 }
 
+const savedFilters = loadFilters()
+
 export const useUiStore = create<UiState>((set, get) => ({
   currentView: 'discover',
   previousView: null,
   selectedModId: null,
   searchQuery: '',
-  sortBy: 'downloads',
-  filterKspVersionMin: '',
-  filterKspVersionMax: '',
-  filterCompatibleOnly: false,
+  ...savedFilters,
 
   setView: (view) =>
     set((state) => ({
@@ -44,12 +60,35 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   setSearchQuery: (query) => set({ searchQuery: query }),
 
-  setSortBy: (sort) => set({ sortBy: sort }),
+  setSortBy: (sort) => {
+    set({ sortBy: sort })
+    const s = get()
+    saveFilters({ sortBy: sort, filterKspVersionMin: s.filterKspVersionMin, filterKspVersionMax: s.filterKspVersionMax, filterCompatibleOnly: s.filterCompatibleOnly })
+  },
 
-  setFilterKspVersionMin: (v) => set({ filterKspVersionMin: v }),
-  setFilterKspVersionMax: (v) => set({ filterKspVersionMax: v }),
-  setFilterCompatibleOnly: (v) => set({ filterCompatibleOnly: v }),
-  resetFilters: () => set({ searchQuery: '', sortBy: 'downloads', filterKspVersionMin: '', filterKspVersionMax: '', filterCompatibleOnly: false }),
+  setFilterKspVersionMin: (v) => {
+    set({ filterKspVersionMin: v })
+    const s = get()
+    saveFilters({ sortBy: s.sortBy, filterKspVersionMin: v, filterKspVersionMax: s.filterKspVersionMax, filterCompatibleOnly: s.filterCompatibleOnly })
+  },
+
+  setFilterKspVersionMax: (v) => {
+    set({ filterKspVersionMax: v })
+    const s = get()
+    saveFilters({ sortBy: s.sortBy, filterKspVersionMin: s.filterKspVersionMin, filterKspVersionMax: v, filterCompatibleOnly: s.filterCompatibleOnly })
+  },
+
+  setFilterCompatibleOnly: (v) => {
+    set({ filterCompatibleOnly: v })
+    const s = get()
+    saveFilters({ sortBy: s.sortBy, filterKspVersionMin: s.filterKspVersionMin, filterKspVersionMax: s.filterKspVersionMax, filterCompatibleOnly: v })
+  },
+
+  resetFilters: () => {
+    const defaults: FilterState = { sortBy: 'downloads', filterKspVersionMin: '', filterKspVersionMax: '', filterCompatibleOnly: false }
+    set({ searchQuery: '', ...defaults })
+    saveFilters(defaults)
+  },
 
   openModDetail: (id) =>
     set((state) => ({
