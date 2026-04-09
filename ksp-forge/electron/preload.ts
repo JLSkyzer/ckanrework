@@ -70,6 +70,11 @@ const api = {
     export: () => ipcRenderer.invoke('logs:export') as Promise<{ success: boolean; path?: string }>,
     openFolder: () => ipcRenderer.invoke('logs:openFolder') as Promise<{ success: boolean }>,
   },
+  app: {
+    checkUpdate: () => ipcRenderer.invoke('app:checkUpdate') as Promise<{ currentVersion: string; latestVersion: string; url: string } | null>,
+    openUrl: (url: string) => ipcRenderer.invoke('app:openUrl', url),
+    getVersion: () => ipcRenderer.invoke('app:getVersion') as Promise<string>,
+  },
 }
 
 export type ElectronAPI = typeof api

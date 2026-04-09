@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ksp-forge
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Build & Package
         working-directory: ksp-forge
@@ -53,8 +53,6 @@ jobs:
             ksp-forge/release/*.dmg
             ksp-forge/release/*.AppImage
             ksp-forge/release/*.deb
-            ksp-forge/release/*.yml
-            ksp-forge/release/*.yaml
           if-no-files-found: ignore
 
   release:

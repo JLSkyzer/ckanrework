@@ -301,8 +301,35 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   ipcMain.handle('meta:getLastSync', () => {
-    // Return null for now — could be persisted in DB later
     return null
+  })
+
+  // --- Update check ---
+  ipcMain.handle('app:checkUpdate', async () => {
+    try {
+      const { app } = require('electron')
+      const currentVersion = app.getVersion()
+      const res = await fetch('https://api.github.com/repos/JLSkyzer/ckanrework/releases/latest', {
+        headers: { 'User-Agent': 'KSP-Forge' }
+      })
+      if (!res.ok) return null
+      const data = await res.json()
+      const latestTag = (data.tag_name || '').replace(/^v/, '')
+      if (!latestTag) return null
+      if (latestTag !== currentVersion) {
+        return { currentVersion, latestVersion: latestTag, url: data.html_url }
+      }
+      return null
+    } catch { return null }
+  })
+
+  ipcMain.handle('app:openUrl', (_event, url: string) => {
+    shell.openExternal(url)
+  })
+
+  ipcMain.handle('app:getVersion', () => {
+    const { app } = require('electron')
+    return app.getVersion()
   })
 
   // --- Dialog ---

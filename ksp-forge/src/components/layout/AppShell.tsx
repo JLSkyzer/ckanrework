@@ -19,10 +19,15 @@ export function AppShell() {
   const { resumeRecovery, dismissRecovery, checkRecovery } = useInstallStore()
   const { fetchProfiles, activeProfileId, fetchInstalledMods } = useProfileStore()
   const [overlayCollapsed, setOverlayCollapsed] = useState(true)
+  const [updateInfo, setUpdateInfo] = useState<{ latestVersion: string; url: string } | null>(null)
 
   useEffect(() => {
     syncIfNeeded()
     fetchProfiles()
+    // Check for updates
+    window.electronAPI?.app?.checkUpdate().then(info => {
+      if (info) setUpdateInfo(info)
+    }).catch(() => {})
   }, [])
 
   // Auto-scan GameData for already installed mods after sync completes
@@ -63,6 +68,52 @@ export function AppShell() {
     <div className="flex h-screen overflow-hidden bg-space-bg text-space-text">
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Update banner */}
+        {updateInfo && (
+          <div className="flex items-center justify-between px-4 py-2 bg-[rgba(99,102,241,0.15)] border-b border-[rgba(99,102,241,0.2)] flex-shrink-0">
+            <span className="text-xs text-[rgba(196,181,253,0.9)]">
+              KSP Forge <strong>v{updateInfo.latestVersion}</strong> is available!
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={() => window.electronAPI?.app?.openUrl(updateInfo.url)}
+                className="text-xs font-semibold text-white bg-[rgba(99,102,241,0.8)] hover:bg-[rgba(99,102,241,1)] px-3 py-1 rounded-lg cursor-pointer transition-colors"
+              >
+                Download
+              </button>
+              <button
+                onClick={() => setUpdateInfo(null)}
+                className="text-xs text-[rgba(148,163,184,0.6)] hover:text-white cursor-pointer transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Recovery banner */}
+        {pendingRecovery && pendingRecovery.length > 0 && (
+          <div className="flex items-center justify-between px-4 py-2 bg-[rgba(245,158,11,0.1)] border-b border-[rgba(245,158,11,0.2)] flex-shrink-0">
+            <span className="text-xs text-[rgba(253,230,138,0.9)]">
+              {pendingRecovery.reduce((a, b) => a + b.length, 0)} mods were queued before the app closed.
+            </span>
+            <div className="flex gap-2">
+              <button
+                onClick={resumeRecovery}
+                className="text-xs font-semibold text-white bg-[rgba(245,158,11,0.8)] hover:bg-[rgba(245,158,11,1)] px-3 py-1 rounded-lg cursor-pointer transition-colors"
+              >
+                Resume
+              </button>
+              <button
+                onClick={dismissRecovery}
+                className="text-xs text-[rgba(148,163,184,0.6)] hover:text-white cursor-pointer transition-colors"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         <main className="flex-1 overflow-hidden">
           {syncing ? (
             <div className="flex flex-col items-center justify-center h-full gap-5 px-8">
@@ -97,32 +148,6 @@ export function AppShell() {
           )}
         </main>
       </div>
-      {/* Recovery banner */}
-      {pendingRecovery && pendingRecovery.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-4 bg-[rgba(0,0,0,0.6)]">
-          <div className="bg-[#12122a] border border-[rgba(99,102,241,0.3)] rounded-xl px-6 py-4 shadow-[0_0_30px_rgba(99,102,241,0.2)] max-w-md w-full flex flex-col gap-3">
-            <h3 className="text-sm font-semibold text-white">Resume pending downloads?</h3>
-            <p className="text-xs text-[rgba(148,163,184,0.7)]">
-              {pendingRecovery.reduce((acc, batch) => acc + batch.length, 0)} mod{pendingRecovery.reduce((acc, batch) => acc + batch.length, 0) !== 1 ? 's were' : ' was'} queued before the app closed.
-            </p>
-            <div className="flex items-center gap-3 justify-end">
-              <button
-                onClick={dismissRecovery}
-                className="px-3 py-1.5 rounded-lg text-xs text-[rgba(148,163,184,0.7)] hover:bg-white/5 transition-colors cursor-pointer"
-              >
-                Dismiss
-              </button>
-              <button
-                onClick={resumeRecovery}
-                className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)] text-white transition-colors cursor-pointer"
-              >
-                Resume
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <DownloadProgress progress={installProgress} collapsed={overlayCollapsed} onToggleCollapse={() => setOverlayCollapsed(c => !c)} onViewDetails={() => { useUiStore.getState().setView('downloads'); setOverlayCollapsed(true) }} />
     </div>
   )
