@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { BrowserWindow } from 'electron'
 import type { DatabaseService } from './database'
 
@@ -160,9 +162,51 @@ export class ImageScraperService {
   private db: DatabaseService
   private cache = new Map<string, { images: string[]; fetchedAt: number }>()
   private descriptionCache = new Map<string, { html: string; fetchedAt: number }>()
+  private cacheDir: string
 
-  constructor(db: DatabaseService) {
+  constructor(db: DatabaseService, cacheDir: string) {
     this.db = db
+    this.cacheDir = cacheDir
+    fs.mkdirSync(path.join(cacheDir, 'images'), { recursive: true })
+    fs.mkdirSync(path.join(cacheDir, 'descriptions'), { recursive: true })
+    this.loadDiskCache()
+  }
+
+  private loadDiskCache() {
+    // Load cached images lists
+    const imagesDir = path.join(this.cacheDir, 'images')
+    try {
+      for (const file of fs.readdirSync(imagesDir)) {
+        if (!file.endsWith('.json')) continue
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(imagesDir, file), 'utf-8'))
+          if (data.images && data.fetchedAt && Date.now() - data.fetchedAt < CACHE_TTL_MS) {
+            this.cache.set(file.replace('.json', ''), data)
+          }
+        } catch { /* skip corrupt */ }
+      }
+    } catch { /* dir doesn't exist yet */ }
+
+    // Load cached descriptions
+    const descDir = path.join(this.cacheDir, 'descriptions')
+    try {
+      for (const file of fs.readdirSync(descDir)) {
+        if (!file.endsWith('.json')) continue
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(descDir, file), 'utf-8'))
+          if (data.html && data.fetchedAt && Date.now() - data.fetchedAt < CACHE_TTL_MS) {
+            this.descriptionCache.set(file.replace('.json', ''), data)
+          }
+        } catch { /* skip corrupt */ }
+      }
+    } catch { /* dir doesn't exist yet */ }
+  }
+
+  private saveToDisk(type: 'images' | 'descriptions', identifier: string, data: any) {
+    try {
+      const dir = path.join(this.cacheDir, type)
+      fs.writeFileSync(path.join(dir, `${identifier}.json`), JSON.stringify(data))
+    } catch { /* ignore write errors */ }
   }
 
   getCachedImages(modIdentifier: string): string[] | null {
@@ -212,7 +256,9 @@ export class ImageScraperService {
       try { new URL(url); return true } catch { return false }
     })
 
-    this.cache.set(modIdentifier, { images: unique, fetchedAt: Date.now() })
+    const cacheEntry = { images: unique, fetchedAt: Date.now() }
+    this.cache.set(modIdentifier, cacheEntry)
+    this.saveToDisk('images', modIdentifier, cacheEntry)
     return unique
   }
 
@@ -232,13 +278,17 @@ export class ImageScraperService {
     const result = await this.fetchForumFirstPost(resources.homepage)
     if (result) {
       console.log(`[forum-scraper] Description extracted: ${result.description.length} chars, ${result.images.length} images`)
-      this.descriptionCache.set(modIdentifier, { html: result.description, fetchedAt: Date.now() })
+      const descEntry = { html: result.description, fetchedAt: Date.now() }
+      this.descriptionCache.set(modIdentifier, descEntry)
+      this.saveToDisk('descriptions', modIdentifier, descEntry)
       // Also cache images from this fetch
       if (result.images.length > 0) {
         const existingCache = this.cache.get(modIdentifier)
         const existingImages = existingCache?.images || []
         const allImages = [...new Set([...existingImages, ...result.images])]
-        this.cache.set(modIdentifier, { images: allImages, fetchedAt: Date.now() })
+        const imgEntry = { images: allImages, fetchedAt: Date.now() }
+        this.cache.set(modIdentifier, imgEntry)
+        this.saveToDisk('images', modIdentifier, imgEntry)
       }
       return result.description
     }

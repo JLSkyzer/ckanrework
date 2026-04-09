@@ -93,7 +93,7 @@ app.whenReady().then(() => {
   const resolver = new ResolverService(db)
   const installer = new InstallerService(db)
   const profile = new ProfileService(db)
-  const imageScraper = new ImageScraperService(db)
+  const imageScraper = new ImageScraperService(db, join(userData, 'scraper-cache'))
   const modCache = new ModCacheService(join(userData, 'mod-cache'))
 
   logger.info('Registering IPC handlers...')
