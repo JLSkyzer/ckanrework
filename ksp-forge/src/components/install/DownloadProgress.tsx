@@ -1,10 +1,10 @@
-import type { InstallProgress } from '../../hooks/use-install'
+import type { InstallProgress } from '../../stores/install-store'
 
 export function DownloadProgress({ progress }: { progress: InstallProgress }) {
   if (!progress.active) return null
 
   const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
-  const done = progress.current >= progress.total
+  const done = progress.current >= progress.total && progress.total > 0
   const hasFailed = progress.failed.length > 0
 
   return (
@@ -18,7 +18,6 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
         flex flex-col gap-2
       "
     >
-      {/* Header */}
       <div className="flex items-center justify-between">
         <span className={`text-xs font-semibold uppercase tracking-wider ${
           done ? (hasFailed ? 'text-[rgba(245,158,11,0.9)]' : 'text-[rgba(74,222,128,0.9)]')
@@ -31,14 +30,12 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
         </span>
       </div>
 
-      {/* Current mod name */}
       {progress.currentName && !done && (
         <p className="text-sm text-white font-medium truncate" title={progress.currentName}>
           {progress.currentName}
         </p>
       )}
 
-      {/* Progress bar */}
       <div className="h-2 rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-300 ease-out"
@@ -51,11 +48,16 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
         />
       </div>
 
-      {/* Failed mods */}
+      {progress.queue > 0 && !done && (
+        <p className="text-[11px] text-[rgba(148,163,184,0.5)]">
+          +{progress.queue} more in queue
+        </p>
+      )}
+
       {hasFailed && done && (
-        <div className="text-xs text-[rgba(252,165,165,0.8)] mt-1">
+        <p className="text-xs text-[rgba(252,165,165,0.8)]">
           Failed: {progress.failed.join(', ')}
-        </div>
+        </p>
       )}
     </div>
   )

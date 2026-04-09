@@ -9,6 +9,7 @@ export interface InstallProgress {
   total: number
   currentName: string
   failed: string[]
+  queue: number
 }
 
 interface InstallState {
@@ -16,6 +17,8 @@ interface InstallState {
   showDialog: boolean
   installing: boolean
   progress: InstallProgress
+  _queue: ResolvedMod[][]
+  _processing: boolean
 
   requestInstall: (identifiers: string[]) => Promise<void>
   confirmInstall: () => Promise<void>
@@ -26,7 +29,9 @@ export const useInstallStore = create<InstallState>((set, get) => ({
   resolution: null,
   showDialog: false,
   installing: false,
-  progress: { active: false, current: 0, total: 0, currentName: '', failed: [] },
+  progress: { active: false, current: 0, total: 0, currentName: '', failed: [], queue: 0 },
+  _queue: [],
+  _processing: false,
 
   requestInstall: async (identifiers: string[]) => {
     const profile = useProfileStore.getState().getActiveProfile()
@@ -45,23 +50,53 @@ export const useInstallStore = create<InstallState>((set, get) => ({
   },
 
   confirmInstall: async () => {
-    const { resolution } = get()
+    const { resolution, _queue } = get()
     if (!resolution) return
-    const profile = useProfileStore.getState().getActiveProfile()
-    if (!profile) return
 
-    const mods: ResolvedMod[] = resolution.toInstall
-    set({
+    set({ showDialog: false })
+
+    // Add to queue
+    const newQueue = [..._queue, resolution.toInstall]
+    set({ _queue: newQueue, resolution: null })
+
+    // Process queue if not already processing
+    processQueue()
+  },
+
+  cancelInstall: () => {
+    set({ showDialog: false, resolution: null })
+  },
+}))
+
+async function processQueue() {
+  const state = useInstallStore.getState()
+  if (state._processing) return
+
+  useInstallStore.setState({ _processing: true })
+
+  while (true) {
+    const { _queue } = useInstallStore.getState()
+    if (_queue.length === 0) break
+
+    const mods = _queue[0]
+    const remaining = _queue.slice(1)
+    useInstallStore.setState({
+      _queue: remaining,
       installing: true,
-      showDialog: false,
-      progress: { active: true, current: 0, total: mods.length, currentName: '', failed: [] },
+      progress: { active: true, current: 0, total: mods.length, currentName: '', failed: [], queue: remaining.length },
     })
+
+    const profile = useProfileStore.getState().getActiveProfile()
+    if (!profile) break
 
     const failed: string[] = []
 
     for (let i = 0; i < mods.length; i++) {
       const mod = mods[i]
-      set(s => ({ progress: { ...s.progress, current: i, currentName: mod.identifier } }))
+      useInstallStore.setState(s => ({
+        progress: { ...s.progress, current: i, currentName: mod.identifier, queue: s._queue.length },
+      }))
+
       try {
         await api.installer.install(mod, profile.ksp_path, profile.id)
       } catch (err) {
@@ -70,19 +105,19 @@ export const useInstallStore = create<InstallState>((set, get) => ({
       }
     }
 
-    set(s => ({ progress: { ...s.progress, current: mods.length, currentName: '', failed } }))
+    useInstallStore.setState(s => ({
+      progress: { ...s.progress, current: mods.length, currentName: '', failed, queue: s._queue.length },
+    }))
+
     await useProfileStore.getState().fetchInstalledMods(profile.id)
+  }
 
-    setTimeout(() => {
-      set({
-        progress: { active: false, current: 0, total: 0, currentName: '', failed: [] },
-        installing: false,
-        resolution: null,
-      })
-    }, 3000)
-  },
-
-  cancelInstall: () => {
-    set({ showDialog: false, resolution: null })
-  },
-}))
+  // Done — show completion for 3s
+  setTimeout(() => {
+    useInstallStore.setState({
+      progress: { active: false, current: 0, total: 0, currentName: '', failed: [], queue: 0 },
+      installing: false,
+      _processing: false,
+    })
+  }, 3000)
+}

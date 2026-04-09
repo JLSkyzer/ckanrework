@@ -74,9 +74,40 @@ export function registerIpcHandlers(services: Services): void {
   // --- Installer ---
   ipcMain.handle('installer:install', async (_event, resolvedMod: any, kspPath: string, profileId: string) => {
     const tempDir = path.join(os.tmpdir(), 'ksp-forge-install')
-    // Convert ResolvedMod to InstallPlanItem
     const plan = installer.buildInstallPlan([resolvedMod])
-    await installer.installMod(plan[0], kspPath, profileId, tempDir)
+    const item = plan[0]
+    const { Worker } = require('worker_threads')
+
+    const files: string[] = await new Promise((resolve, reject) => {
+      const workerPath = path.join(__dirname, 'install-worker.js')
+      const worker = new Worker(workerPath, {
+        workerData: {
+          identifier: item.identifier,
+          version: item.version,
+          downloadUrl: item.downloadUrl,
+          hash: item.hash,
+          directives: item.directives,
+          kspPath,
+          tempDir,
+        }
+      })
+
+      worker.on('message', (msg: any) => {
+        if (msg.type === 'done') resolve(msg.files)
+        else if (msg.type === 'error') reject(new Error(msg.message))
+      })
+      worker.on('error', reject)
+    })
+
+    // Track in DB (main thread, fast)
+    db.addInstalledMod({
+      profile_id: profileId,
+      identifier: item.identifier,
+      version: item.version,
+      installed_files: JSON.stringify(files),
+      installed_at: Date.now(),
+    })
+
     return { success: true }
   })
 

@@ -11,6 +11,7 @@ export default defineConfig({
         entry: {
           index: resolve(__dirname, 'electron/main.ts'),
           'index-worker': resolve(__dirname, 'electron/services/index-worker.ts'),
+          'install-worker': resolve(__dirname, 'electron/services/install-worker.ts'),
         },
         formats: ['cjs'],
       },
