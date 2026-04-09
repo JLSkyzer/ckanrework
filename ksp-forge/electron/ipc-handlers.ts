@@ -1,4 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
+import fs from 'fs'
 import type { SpaceDockCacheRow } from './types'
 import type { ImageScraperService } from './services/image-scraper'
 import type { DatabaseService } from './services/database'
@@ -7,6 +8,7 @@ import type { SpaceDockService } from './services/spacedock'
 import type { ResolverService } from './services/resolver'
 import type { InstallerService } from './services/installer'
 import type { ProfileService } from './services/profile'
+import type { ModCacheService } from './services/mod-cache'
 import os from 'os'
 import path from 'path'
 
@@ -18,10 +20,11 @@ interface Services {
   installer: InstallerService
   profile: ProfileService
   imageScraper: ImageScraperService
+  modCache: ModCacheService
 }
 
 export function registerIpcHandlers(services: Services): void {
-  const { db, metaSync, spaceDock, resolver, installer, profile, imageScraper } = services
+  const { db, metaSync, spaceDock, resolver, installer, profile, imageScraper, modCache } = services
 
   // --- Mods ---
   ipcMain.handle('mods:getAll', () => {
@@ -51,6 +54,10 @@ export function registerIpcHandlers(services: Services): void {
   // --- SpaceDock ---
   ipcMain.handle('spacedock:fetch', (_event, identifier: string) => {
     return spaceDock.fetchModData(identifier)
+  })
+
+  ipcMain.handle('spacedock:getCachedImageUrl', async (_event, identifier: string) => {
+    return spaceDock.getCachedImageUrl(identifier)
   })
 
   ipcMain.handle('spacedock:fetchBatch', async (_event, identifiers: string[]) => {
@@ -112,6 +119,13 @@ export function registerIpcHandlers(services: Services): void {
       installed_at: Date.now(),
     })
 
+    // Cache mod files for future profile switches
+    try {
+      modCache.cacheModFiles(item.identifier, item.version, files, kspPath)
+    } catch {
+      // Non-fatal: caching failure should not break install
+    }
+
     return { success: true }
   })
 
@@ -146,6 +160,58 @@ export function registerIpcHandlers(services: Services): void {
     return profile.exportProfile(profileId)
   })
 
+  ipcMain.handle('profiles:exportToFile', async (_event, profileId: string) => {
+    const exportData = profile.exportProfile(profileId)
+    const exportJson = {
+      name: exportData.profile.name,
+      ksp_version: exportData.profile.ksp_version,
+      mods: exportData.mods.map((m) => ({ identifier: m.identifier, version: m.version })),
+    }
+
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showSaveDialog(win, {
+          defaultPath: `${exportData.profile.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`,
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+        })
+      : await dialog.showSaveDialog({
+          defaultPath: `${exportData.profile.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.json`,
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+        })
+
+    if (result.canceled || !result.filePath) return { success: false }
+    fs.writeFileSync(result.filePath, JSON.stringify(exportJson, null, 2), 'utf-8')
+    return { success: true, path: result.filePath }
+  })
+
+  ipcMain.handle('profiles:importFromFile', async () => {
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showOpenDialog(win, {
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+          properties: ['openFile'],
+        })
+      : await dialog.showOpenDialog({
+          filters: [{ name: 'JSON', extensions: ['json'] }],
+          properties: ['openFile'],
+        })
+
+    if (result.canceled || result.filePaths.length === 0) return null
+
+    const content = fs.readFileSync(result.filePaths[0], 'utf-8')
+    const data = JSON.parse(content) as {
+      name: string
+      ksp_version: string
+      mods: Array<{ identifier: string; version: string }>
+    }
+
+    return {
+      name: data.name,
+      ksp_version: data.ksp_version,
+      mods: data.mods,
+    }
+  })
+
   ipcMain.handle('profiles:validatePath', (_event, kspPath: string) => {
     const valid = profile.validateKspPath(kspPath)
     if (valid) {
@@ -165,6 +231,22 @@ export function registerIpcHandlers(services: Services): void {
 
   ipcMain.handle('profiles:getInstalled', (_event, profileId: string) => {
     return db.getInstalledMods(profileId)
+  })
+
+  ipcMain.handle('profiles:switch', (_event, fromProfileId: string, toProfileId: string) => {
+    const fromProfile = db.getProfile(fromProfileId)
+    if (!fromProfile) throw new Error(`Profile ${fromProfileId} not found`)
+    return profile.switchProfile(fromProfileId, toProfileId, fromProfile.ksp_path, modCache)
+  })
+
+  // --- Mod Cache ---
+  ipcMain.handle('modcache:getSize', () => {
+    return modCache.getCacheSize()
+  })
+
+  ipcMain.handle('modcache:clear', () => {
+    modCache.clearCache()
+    return { success: true }
   })
 
   // --- Meta ---

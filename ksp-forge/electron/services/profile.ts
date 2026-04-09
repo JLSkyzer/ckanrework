@@ -3,6 +3,13 @@ import path from 'path'
 import crypto from 'crypto'
 import type { ProfileRow, InstalledModRow } from '../types'
 import type { DatabaseService } from './database'
+import type { ModCacheService } from './mod-cache'
+
+export interface ProfileSwitchResult {
+  removed: string[]
+  restored: string[]
+  needsDownload: string[]
+}
 
 export interface ProfileExport {
   profile: ProfileRow
@@ -86,6 +93,75 @@ export class ProfileService {
     if (!profile) throw new Error(`Profile ${profileId} not found`)
     const mods = this.db.getInstalledMods(profileId)
     return { profile, mods }
+  }
+
+  switchProfile(
+    fromProfileId: string,
+    toProfileId: string,
+    kspPath: string,
+    modCache: ModCacheService
+  ): ProfileSwitchResult {
+    const fromProfile = this.db.getProfile(fromProfileId)
+    const toProfile = this.db.getProfile(toProfileId)
+
+    if (!fromProfile) throw new Error(`Source profile ${fromProfileId} not found`)
+    if (!toProfile) throw new Error(`Target profile ${toProfileId} not found`)
+
+    // If profiles point to different KSP paths, skip file swapping
+    if (fromProfile.ksp_path !== toProfile.ksp_path) {
+      return { removed: [], restored: [], needsDownload: [] }
+    }
+
+    const fromMods = this.db.getInstalledMods(fromProfileId)
+    const toMods = this.db.getInstalledMods(toProfileId)
+
+    const fromMap = new Map<string, InstalledModRow>()
+    for (const m of fromMods) fromMap.set(m.identifier, m)
+
+    const toMap = new Map<string, InstalledModRow>()
+    for (const m of toMods) toMap.set(m.identifier, m)
+
+    // Compute sets
+    const toRemove: InstalledModRow[] = []
+    for (const m of fromMods) {
+      if (!toMap.has(m.identifier)) toRemove.push(m)
+    }
+
+    const toAdd: InstalledModRow[] = []
+    for (const m of toMods) {
+      if (!fromMap.has(m.identifier)) toAdd.push(m)
+    }
+
+    // Execute: move out mods not in target profile
+    const removed: string[] = []
+    for (const mod of toRemove) {
+      try {
+        const files: string[] = JSON.parse(mod.installed_files)
+        modCache.moveToCache(mod.identifier, mod.version, files, kspPath)
+        removed.push(mod.identifier)
+      } catch {
+        // Skip mods that fail to move
+      }
+    }
+
+    // Execute: restore mods needed by target profile
+    const restored: string[] = []
+    const needsDownload: string[] = []
+
+    for (const mod of toAdd) {
+      if (modCache.isInCache(mod.identifier, mod.version)) {
+        try {
+          modCache.restoreFromCache(mod.identifier, mod.version, kspPath)
+          restored.push(mod.identifier)
+        } catch {
+          needsDownload.push(mod.identifier)
+        }
+      } else {
+        needsDownload.push(mod.identifier)
+      }
+    }
+
+    return { removed, restored, needsDownload }
   }
 
   detectKspVersion(kspPath: string): string {

@@ -2,14 +2,60 @@ import { useState } from 'react'
 import { useProfileStore } from '../../stores/profile-store'
 import { formatDate } from '../../lib/format'
 import { ProfileWizard } from './ProfileWizard'
+import { api } from '../../lib/ipc'
 
 export function ProfileList() {
-  const { profiles, activeProfileId, setActiveProfile, deleteProfile } = useProfileStore()
+  const { profiles, activeProfileId, setActiveProfile, deleteProfile, createProfile, fetchProfiles, switching, switchResult, clearSwitchResult } = useProfileStore()
   const [showWizard, setShowWizard] = useState(false)
+  const [importStatus, setImportStatus] = useState<string | null>(null)
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     await deleteProfile(id)
+  }
+
+  const handleExport = async (e: React.MouseEvent, profileId: string) => {
+    e.stopPropagation()
+    await api.profiles.exportToFile(profileId)
+  }
+
+  const handleImport = async () => {
+    const data = await api.profiles.importFromFile()
+    if (!data) return
+
+    // Need a KSP path for the profile -- use active profile's path as default
+    const activeProfile = profiles.find((p) => p.id === activeProfileId)
+    const kspPath = activeProfile?.ksp_path
+    if (!kspPath) {
+      setImportStatus('Import requires an existing profile to determine KSP path. Create a profile first.')
+      setTimeout(() => setImportStatus(null), 4000)
+      return
+    }
+
+    const newProfile = await createProfile(`${data.name} (imported)`, kspPath)
+    if (!newProfile) {
+      setImportStatus('Failed to create profile.')
+      setTimeout(() => setImportStatus(null), 4000)
+      return
+    }
+
+    // Register imported mods as installed in the new profile
+    for (const mod of data.mods) {
+      try {
+        await api.installer.install(
+          { identifier: mod.identifier, version: mod.version, downloadUrl: '', hash: null, directives: '[]' },
+          kspPath,
+          newProfile.id
+        )
+      } catch {
+        // Mod install may fail if not available, skip silently
+      }
+    }
+
+    await fetchProfiles()
+    setActiveProfile(newProfile.id)
+    setImportStatus(`Imported "${data.name}" with ${data.mods.length} mods.`)
+    setTimeout(() => setImportStatus(null), 4000)
   }
 
   return (
@@ -22,19 +68,73 @@ export function ProfileList() {
             Manage your KSP installation profiles
           </p>
         </div>
-        <button
-          onClick={() => setShowWizard(true)}
-          className="
-            flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
-            bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)]
-            text-white border border-[rgba(99,102,241,0.4)]
-            transition-colors cursor-pointer
-          "
-        >
-          <span>+</span>
-          <span>New Profile</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleImport}
+            className="
+              flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+              bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)]
+              text-[rgba(196,181,253,0.9)] border border-[rgba(99,102,241,0.2)]
+              transition-colors cursor-pointer
+            "
+          >
+            Import Profile
+          </button>
+          <button
+            onClick={() => setShowWizard(true)}
+            className="
+              flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold
+              bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)]
+              text-white border border-[rgba(99,102,241,0.4)]
+              transition-colors cursor-pointer
+            "
+          >
+            <span>+</span>
+            <span>New Profile</span>
+          </button>
+        </div>
       </div>
+
+      {/* Import status */}
+      {importStatus && (
+        <div className="flex-shrink-0 px-6 pb-2">
+          <div className="text-sm text-[rgba(196,181,253,0.9)] bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] rounded-lg px-4 py-2">
+            {importStatus}
+          </div>
+        </div>
+      )}
+
+      {/* Switching state */}
+      {switching && (
+        <div className="flex-shrink-0 px-6 pb-2">
+          <div className="text-sm text-[rgba(196,181,253,0.9)] bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] rounded-lg px-4 py-2 flex items-center gap-2">
+            <span className="animate-spin inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full" />
+            Switching profile...
+          </div>
+        </div>
+      )}
+
+      {/* Switch result */}
+      {switchResult && !switching && (
+        <div className="flex-shrink-0 px-6 pb-2">
+          <div className="text-sm text-[rgba(196,181,253,0.9)] bg-[rgba(99,102,241,0.1)] border border-[rgba(99,102,241,0.2)] rounded-lg px-4 py-2 flex items-center justify-between">
+            <span>
+              Switched!
+              {switchResult.restored.length > 0 && ` ${switchResult.restored.length} mod${switchResult.restored.length === 1 ? '' : 's'} restored from cache`}
+              {switchResult.restored.length > 0 && switchResult.needsDownload.length > 0 && ','}
+              {switchResult.needsDownload.length > 0 && ` ${switchResult.needsDownload.length} need${switchResult.needsDownload.length === 1 ? 's' : ''} downloading`}
+              {switchResult.removed.length > 0 && ` (${switchResult.removed.length} cached)`}
+              {switchResult.restored.length === 0 && switchResult.needsDownload.length === 0 && switchResult.removed.length === 0 && ' No file changes needed.'}
+            </span>
+            <button
+              onClick={clearSwitchResult}
+              className="text-[rgba(148,163,184,0.6)] hover:text-white ml-2 cursor-pointer"
+            >
+              x
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto px-6 pb-6">
@@ -135,19 +235,34 @@ export function ProfileList() {
                       </span>
                     </div>
 
-                    {/* Delete button */}
-                    <button
-                      onClick={(e) => handleDelete(e, profile.id)}
-                      className="
-                        px-3 py-1.5 rounded-lg text-xs font-medium
-                        text-[rgba(252,165,165,0.7)] hover:text-[rgba(252,165,165,1)]
-                        bg-[rgba(239,68,68,0.06)] hover:bg-[rgba(239,68,68,0.15)]
-                        border border-[rgba(239,68,68,0.12)] hover:border-[rgba(239,68,68,0.3)]
-                        transition-colors cursor-pointer
-                      "
-                    >
-                      Delete
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {/* Export button */}
+                      <button
+                        onClick={(e) => handleExport(e, profile.id)}
+                        className="
+                          px-3 py-1.5 rounded-lg text-xs font-medium
+                          text-[rgba(196,181,253,0.7)] hover:text-[rgba(196,181,253,1)]
+                          bg-[rgba(99,102,241,0.06)] hover:bg-[rgba(99,102,241,0.15)]
+                          border border-[rgba(99,102,241,0.12)] hover:border-[rgba(99,102,241,0.3)]
+                          transition-colors cursor-pointer
+                        "
+                      >
+                        Export
+                      </button>
+                      {/* Delete button */}
+                      <button
+                        onClick={(e) => handleDelete(e, profile.id)}
+                        className="
+                          px-3 py-1.5 rounded-lg text-xs font-medium
+                          text-[rgba(252,165,165,0.7)] hover:text-[rgba(252,165,165,1)]
+                          bg-[rgba(239,68,68,0.06)] hover:bg-[rgba(239,68,68,0.15)]
+                          border border-[rgba(239,68,68,0.12)] hover:border-[rgba(239,68,68,0.3)]
+                          transition-colors cursor-pointer
+                        "
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               )

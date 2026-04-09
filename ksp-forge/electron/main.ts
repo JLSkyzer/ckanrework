@@ -8,6 +8,7 @@ import { ResolverService } from './services/resolver'
 import { InstallerService } from './services/installer'
 import { ProfileService } from './services/profile'
 import { ImageScraperService } from './services/image-scraper'
+import { ModCacheService } from './services/mod-cache'
 import { registerIpcHandlers } from './ipc-handlers'
 
 function createWindow(): void {
@@ -59,13 +60,15 @@ app.whenReady().then(() => {
   db.init()
 
   const metaSync = new MetaSyncService(repoPath, db, dbPath)
-  const spaceDock = new SpaceDockService(db)
+  const imageCacheDir = join(userData, 'image-cache')
+  const spaceDock = new SpaceDockService(db, imageCacheDir)
   const resolver = new ResolverService(db)
   const installer = new InstallerService(db)
   const profile = new ProfileService(db)
   const imageScraper = new ImageScraperService(db)
+  const modCache = new ModCacheService(join(userData, 'mod-cache'))
 
-  registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile, imageScraper })
+  registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile, imageScraper, modCache })
 
   createWindow()
 

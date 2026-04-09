@@ -12,6 +12,7 @@ const api = {
   spacedock: {
     fetch: (identifier: string) => ipcRenderer.invoke('spacedock:fetch', identifier),
     fetchBatch: (identifiers: string[]) => ipcRenderer.invoke('spacedock:fetchBatch', identifiers) as Promise<Record<string, any>>,
+    getCachedImageUrl: (identifier: string) => ipcRenderer.invoke('spacedock:getCachedImageUrl', identifier) as Promise<string | null>,
   },
   images: {
     scrape: (identifier: string) => ipcRenderer.invoke('images:scrape', identifier) as Promise<string[]>,
@@ -38,10 +39,17 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke('profiles:delete', id),
     clone: (sourceId: string, newName: string) => ipcRenderer.invoke('profiles:clone', sourceId, newName),
     export: (profileId: string) => ipcRenderer.invoke('profiles:export', profileId),
+    exportToFile: (profileId: string) => ipcRenderer.invoke('profiles:exportToFile', profileId) as Promise<{ success: boolean; path?: string }>,
+    importFromFile: () => ipcRenderer.invoke('profiles:importFromFile') as Promise<{ name: string; ksp_version: string; mods: Array<{ identifier: string; version: string }> } | null>,
     validatePath: (kspPath: string) => ipcRenderer.invoke('profiles:validatePath', kspPath),
     getInstalled: (profileId: string) => ipcRenderer.invoke('profiles:getInstalled', profileId),
     autoDetect: () => ipcRenderer.invoke('profiles:autoDetect') as Promise<{ path: string; source: string; version: string }[]>,
     scanInstalled: (profileId: string) => ipcRenderer.invoke('profiles:scanInstalled', profileId) as Promise<{ found: number; mods: string[] }>,
+    switch: (fromId: string, toId: string) => ipcRenderer.invoke('profiles:switch', fromId, toId) as Promise<{ removed: string[]; restored: string[]; needsDownload: string[] }>,
+  },
+  modCache: {
+    getSize: () => ipcRenderer.invoke('modcache:getSize') as Promise<number>,
+    clear: () => ipcRenderer.invoke('modcache:clear') as Promise<{ success: boolean }>,
   },
   meta: {
     sync: () => ipcRenderer.invoke('meta:sync'),

@@ -4,15 +4,36 @@ import { useUiStore } from '../../stores/ui-store'
 import { api } from '../../lib/ipc'
 import { formatDate } from '../../lib/format'
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1)
+  const value = bytes / Math.pow(1024, i)
+  return `${value.toFixed(i === 0 ? 0 : 1)} ${units[i]}`
+}
+
 export function SettingsView() {
   const { modCount, loading, syncMeta } = useModStore()
   const { concurrentDownloads, setConcurrentDownloads } = useUiStore()
   const [lastSync, setLastSync] = useState<number | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [cacheSize, setCacheSize] = useState<number | null>(null)
+  const [clearingCache, setClearingCache] = useState(false)
 
   useEffect(() => {
     api.meta.getLastSync().then((ts: number | null) => setLastSync(ts))
+    api.modCache.getSize().then((size: number) => setCacheSize(size))
   }, [])
+
+  const handleClearCache = async () => {
+    setClearingCache(true)
+    try {
+      await api.modCache.clear()
+      setCacheSize(0)
+    } finally {
+      setClearingCache(false)
+    }
+  }
 
   const handleSync = async () => {
     setSyncing(true)
@@ -127,6 +148,42 @@ export function SettingsView() {
                 onChange={(e) => setConcurrentDownloads(parseInt(e.target.value, 10) || 1)}
                 className="w-16 px-3 py-1.5 rounded-lg text-sm text-white bg-[rgba(255,255,255,0.05)] border border-[rgba(99,102,241,0.2)] focus:border-[rgba(99,102,241,0.5)] focus:outline-none text-center"
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Mod Cache section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">
+            <span className="text-base">&#128451;</span>
+            <h3 className="text-base font-semibold text-white">Mod Cache</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(99,102,241,0.12)] p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white font-medium">
+                  Cache size: {cacheSize !== null ? formatBytes(cacheSize) : '...'}
+                </p>
+                <p className="text-xs text-[rgba(148,163,184,0.6)] mt-0.5">
+                  Mod files are cached locally so profile switching can restore mods without re-downloading.
+                </p>
+              </div>
+              <button
+                onClick={handleClearCache}
+                disabled={clearingCache || cacheSize === 0}
+                className={`
+                  flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold
+                  transition-colors
+                  ${
+                    clearingCache || cacheSize === 0
+                      ? 'bg-[rgba(99,102,241,0.2)] text-[rgba(148,163,184,0.4)] border border-[rgba(99,102,241,0.15)] cursor-not-allowed'
+                      : 'bg-[rgba(239,68,68,0.15)] hover:bg-[rgba(239,68,68,0.3)] text-[#ef4444] border border-[rgba(239,68,68,0.2)] cursor-pointer'
+                  }
+                `}
+              >
+                {clearingCache ? 'Clearing...' : 'Clear Cache'}
+              </button>
             </div>
           </div>
         </section>
