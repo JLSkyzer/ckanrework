@@ -89,13 +89,13 @@ export function ModDetail() {
       setVersions(vers)
       setLoadingMeta(false)
 
-      // If SpaceDock description is short/missing, try forum
-      const sdDesc = sd?.description || sd?.description_html || ''
-      if (sdDesc.length < 200) {
-        window.electronAPI?.images?.forumDescription(mod.identifier).then((html) => {
-          if (html) setForumDescription(html)
-        }).catch(() => {})
-      }
+      // Always try to fetch forum description (it's the most complete)
+      window.electronAPI?.images?.forumDescription(mod.identifier).then((html) => {
+        if (html) {
+          console.log(`[ModDetail] Got forum description for ${mod.identifier}: ${html.length} chars`)
+          setForumDescription(html)
+        }
+      }).catch(() => {})
     })
   }, [mod?.identifier])
 

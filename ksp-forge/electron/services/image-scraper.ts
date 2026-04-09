@@ -274,10 +274,19 @@ export class ImageScraperService {
 
   private fetchWithBrowser(url: string): Promise<string | null> {
     return new Promise((resolve) => {
-      const timeout = setTimeout(() => {
-        try { win.close() } catch {}
-        resolve(null)
-      }, 20000)
+      console.log('[forum-scraper] Loading:', url)
+
+      let resolved = false
+      const done = (result: string | null, reason: string) => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(timer)
+        console.log('[forum-scraper] Done:', reason, result ? `(${result.length} chars)` : '(null)')
+        try { win.destroy() } catch {}
+        resolve(result)
+      }
+
+      const timer = setTimeout(() => done(null, 'timeout after 25s'), 25000)
 
       const win = new BrowserWindow({
         width: 1280,
@@ -290,37 +299,60 @@ export class ImageScraperService {
         },
       })
 
-      let resolved = false
+      // Poll for content every 2s — Cloudflare does JS redirects so
+      // did-finish-load fires on the challenge page, not the final page
+      let pollCount = 0
+      const maxPolls = 10
 
-      win.webContents.on('did-finish-load', async () => {
-        // Wait a bit for Cloudflare challenge to complete and JS to render
-        await new Promise(r => setTimeout(r, 3000))
+      const pollForContent = async () => {
+        if (resolved) return
+        pollCount++
+        console.log(`[forum-scraper] Poll ${pollCount}/${maxPolls}`)
 
         try {
-          const html = await win.webContents.executeJavaScript('document.documentElement.outerHTML')
-          if (!resolved) {
-            resolved = true
-            clearTimeout(timeout)
-            win.close()
-            // Check if we actually got past Cloudflare
-            if (html.includes('commentContent') || html.includes('ipsType_richText') || html.length > 20000) {
-              resolve(html)
-            } else {
-              // Still on challenge page, wait longer and retry once
-              resolve(null)
-            }
+          const html: string = await win.webContents.executeJavaScript('document.documentElement.outerHTML')
+          const title: string = await win.webContents.executeJavaScript('document.title')
+          console.log(`[forum-scraper] Title: "${title}", HTML: ${html.length} chars`)
+
+          // Check if we're past Cloudflare
+          const isChallenge = title.includes('Just a moment') || html.includes('cf-challenge') || html.length < 10000
+          if (!isChallenge) {
+            // We have the real page
+            const hasContent = html.includes('commentContent') || html.includes('ipsType_richText') || html.includes('ipsContained')
+            console.log(`[forum-scraper] Real page loaded, hasContent: ${hasContent}`)
+            done(html, 'content found')
+            return
           }
-        } catch {
-          if (!resolved) { resolved = true; clearTimeout(timeout); win.close(); resolve(null) }
+
+          if (pollCount < maxPolls) {
+            setTimeout(pollForContent, 2000)
+          } else {
+            done(null, 'max polls reached, still on challenge')
+          }
+        } catch (err) {
+          console.log('[forum-scraper] Poll error:', err)
+          if (pollCount < maxPolls) {
+            setTimeout(pollForContent, 2000)
+          } else {
+            done(null, 'poll error after max retries')
+          }
         }
+      }
+
+      win.webContents.on('did-finish-load', () => {
+        console.log('[forum-scraper] did-finish-load fired')
+        // Start polling after first load
+        setTimeout(pollForContent, 2000)
       })
 
-      win.webContents.on('did-fail-load', () => {
-        if (!resolved) { resolved = true; clearTimeout(timeout); win.close(); resolve(null) }
+      win.webContents.on('did-fail-load', (_e, code, desc) => {
+        console.log(`[forum-scraper] did-fail-load: ${code} ${desc}`)
+        // Don't resolve on fail — Cloudflare sometimes triggers this before redirect
       })
 
-      win.loadURL(url).catch(() => {
-        if (!resolved) { resolved = true; clearTimeout(timeout); resolve(null) }
+      win.loadURL(url).catch((err) => {
+        console.log('[forum-scraper] loadURL error:', err)
+        done(null, 'loadURL error')
       })
     })
   }
