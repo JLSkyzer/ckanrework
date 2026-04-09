@@ -36,7 +36,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
   const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
   const { getActiveProfile } = useProfileStore()
-  const { resolution, showDialog, installing, confirmInstall, cancelInstall, requestInstall } = useInstall()
+  const { resolution, showDialog, installing, progress, confirmInstall, cancelInstall, requestInstall } = useInstall()
   const parentRef = useRef<HTMLDivElement>(null)
 
   const handleCardInstall = useCallback((identifier: string) => {
