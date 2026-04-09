@@ -79,6 +79,9 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
       ? mods.filter((m) => installedSet.has(m.identifier))
       : mods.filter((m) => !installedSet.has(m.identifier)) // hide installed from Discover
 
+    // Filters only apply to Discover, not Installed
+    if (isInstalledView) return result
+
     // KSP version range filter
     if (filterKspVersionMin) {
       result = result.filter((m) => {
