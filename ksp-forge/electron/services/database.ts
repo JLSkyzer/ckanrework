@@ -311,9 +311,19 @@ export class DatabaseService {
     const rows = this.db.prepare(`
       SELECT DISTINCT ksp_version FROM mods
       WHERE ksp_version IS NOT NULL AND ksp_version != '' AND ksp_version != 'any'
-      ORDER BY ksp_version DESC
     `).all() as { ksp_version: string }[]
-    return rows.map(r => r.ksp_version)
+    return rows
+      .map(r => r.ksp_version)
+      .filter(v => /^\d+(\.\d+)*$/.test(v))
+      .sort((a, b) => {
+        const pa = a.split('.').map(Number)
+        const pb = b.split('.').map(Number)
+        for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+          const diff = (pb[i] ?? 0) - (pa[i] ?? 0)
+          if (diff !== 0) return diff
+        }
+        return 0
+      })
   }
 
   runInTransaction(fn: () => void): void {
