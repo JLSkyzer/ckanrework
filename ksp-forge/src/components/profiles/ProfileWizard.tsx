@@ -18,6 +18,9 @@ export function ProfileWizard({ onClose }: ProfileWizardProps) {
     kspVersion?: string
   } | null>(null)
   const [creating, setCreating] = useState(false)
+  const [detecting, setDetecting] = useState(false)
+  const [detectedPaths, setDetectedPaths] = useState<{ path: string; source: string; version: string }[]>([])
+  const [showDetected, setShowDetected] = useState(false)
 
   // Validate path whenever it changes (debounced)
   useEffect(() => {
@@ -40,6 +43,27 @@ export function ProfileWizard({ onClose }: ProfileWizardProps) {
 
     return () => clearTimeout(timer)
   }, [kspPath])
+
+  const handleAutoDetect = async () => {
+    setDetecting(true)
+    try {
+      const paths = await api.profiles.autoDetect()
+      setDetectedPaths(paths)
+      setShowDetected(true)
+      if (paths.length === 1) {
+        setKspPath(paths[0].path)
+        if (!name.trim()) setName(`KSP ${paths[0].version}`)
+      }
+    } finally {
+      setDetecting(false)
+    }
+  }
+
+  const handleSelectDetected = (detected: { path: string; source: string; version: string }) => {
+    setKspPath(detected.path)
+    if (!name.trim()) setName(`KSP ${detected.version}`)
+    setShowDetected(false)
+  }
 
   const handleBrowse = async () => {
     const folder = await api.dialog.selectFolder()
@@ -112,12 +136,63 @@ export function ProfileWizard({ onClose }: ProfileWizardProps) {
           <label className="text-xs font-semibold text-[rgba(148,163,184,0.7)] uppercase tracking-wider">
             KSP Installation Folder
           </label>
-          <div className="flex gap-2">
+
+          {/* Auto-detect button */}
+          <button
+            onClick={handleAutoDetect}
+            disabled={detecting}
+            className="
+              w-full px-3 py-2.5 rounded-lg text-sm font-medium
+              bg-[rgba(99,102,241,0.12)] hover:bg-[rgba(99,102,241,0.22)]
+              text-[rgba(196,181,253,0.9)] border border-[rgba(99,102,241,0.2)]
+              transition-colors cursor-pointer disabled:opacity-50
+              flex items-center justify-center gap-2
+            "
+          >
+            {detecting ? (
+              <span className="animate-pulse">Searching for KSP...</span>
+            ) : (
+              <>
+                <span>Auto-detect (Steam / GOG / Epic)</span>
+              </>
+            )}
+          </button>
+
+          {/* Detected installations */}
+          {showDetected && detectedPaths.length > 0 && (
+            <div className="flex flex-col gap-1.5 mt-1">
+              {detectedPaths.map((d, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleSelectDetected(d)}
+                  className="
+                    w-full text-left px-3 py-2 rounded-lg text-sm
+                    bg-[rgba(74,222,128,0.08)] border border-[rgba(74,222,128,0.2)]
+                    hover:bg-[rgba(74,222,128,0.15)] transition-colors cursor-pointer
+                  "
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[rgba(74,222,128,0.9)] font-medium">{d.source}</span>
+                    <span className="text-xs text-[rgba(148,163,184,0.6)]">KSP {d.version}</span>
+                  </div>
+                  <p className="text-xs text-[rgba(148,163,184,0.5)] mt-0.5 truncate">{d.path}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {showDetected && detectedPaths.length === 0 && !detecting && (
+            <p className="text-xs text-[rgba(252,165,165,0.8)]">
+              No KSP installation found automatically. Use Browse to select manually.
+            </p>
+          )}
+
+          {/* Manual path input */}
+          <div className="flex gap-2 mt-1">
             <input
               type="text"
               value={kspPath}
               onChange={(e) => setKspPath(e.target.value)}
-              placeholder="/path/to/KSP"
+              placeholder="Or enter path manually..."
               className="
                 flex-1 min-w-0 px-3 py-2 rounded-lg text-sm
                 bg-[rgba(255,255,255,0.04)] border border-[rgba(99,102,241,0.2)]

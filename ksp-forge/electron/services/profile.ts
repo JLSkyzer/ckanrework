@@ -123,6 +123,72 @@ export class ProfileService {
     return 'unknown'
   }
 
+  autoDetectKspPaths(): { path: string; source: string; version: string }[] {
+    const found: { path: string; source: string; version: string }[] = []
+    const checked = new Set<string>()
+
+    const tryPath = (p: string, source: string) => {
+      const normalized = path.resolve(p)
+      if (checked.has(normalized)) return
+      checked.add(normalized)
+      if (this.validateKspPath(normalized)) {
+        found.push({ path: normalized, source, version: this.detectKspVersion(normalized) })
+      }
+    }
+
+    // Steam default paths (Windows)
+    const programFilesX86 = process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)'
+    const programFiles = process.env['ProgramFiles'] || 'C:\\Program Files'
+
+    const steamDefaults = [
+      path.join(programFilesX86, 'Steam'),
+      path.join(programFiles, 'Steam'),
+      path.join(process.env['HOME'] || process.env['USERPROFILE'] || '', 'Steam'),
+      // Linux
+      path.join(process.env['HOME'] || '', '.steam', 'steam'),
+      path.join(process.env['HOME'] || '', '.local', 'share', 'Steam'),
+      // macOS
+      path.join(process.env['HOME'] || '', 'Library', 'Application Support', 'Steam'),
+    ]
+
+    // Find all Steam library folders
+    const libraryPaths: string[] = []
+    for (const steamRoot of steamDefaults) {
+      const vdfPath = path.join(steamRoot, 'steamapps', 'libraryfolders.vdf')
+      if (fs.existsSync(vdfPath)) {
+        try {
+          const content = fs.readFileSync(vdfPath, 'utf-8')
+          // Parse "path" entries from VDF — matches lines like: "path"		"D:\\SteamLibrary"
+          const pathMatches = content.matchAll(/"path"\s+"([^"]+)"/g)
+          for (const match of pathMatches) {
+            libraryPaths.push(match[1])
+          }
+        } catch { /* ignore */ }
+        // Also add the root steamapps parent
+        libraryPaths.push(steamRoot)
+      }
+    }
+
+    // Check for KSP in each library
+    for (const lib of libraryPaths) {
+      tryPath(path.join(lib, 'steamapps', 'common', 'Kerbal Space Program'), 'Steam')
+    }
+
+    // Also try the direct steamapps/common under default steam paths
+    for (const steamRoot of steamDefaults) {
+      tryPath(path.join(steamRoot, 'steamapps', 'common', 'Kerbal Space Program'), 'Steam')
+    }
+
+    // GOG default
+    tryPath(path.join(programFilesX86, 'GOG Galaxy', 'Games', 'Kerbal Space Program'), 'GOG')
+    tryPath(path.join(programFiles, 'GOG Galaxy', 'Games', 'Kerbal Space Program'), 'GOG')
+
+    // Epic Games
+    tryPath(path.join(programFiles, 'Epic Games', 'KerbalSpaceProgram'), 'Epic')
+
+    return found
+  }
+
   validateKspPath(kspPath: string): boolean {
     try {
       const gamDataPath = path.join(kspPath, 'GameData')

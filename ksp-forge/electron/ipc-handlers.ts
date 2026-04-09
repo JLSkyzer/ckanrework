@@ -93,6 +93,10 @@ export function registerIpcHandlers(services: Services): void {
     return profile.validateKspPath(kspPath)
   })
 
+  ipcMain.handle('profiles:autoDetect', () => {
+    return profile.autoDetectKspPaths()
+  })
+
   ipcMain.handle('profiles:getInstalled', (_event, profileId: string) => {
     return db.getInstalledMods(profileId)
   })
