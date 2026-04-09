@@ -48,12 +48,17 @@ export function ProfileWizard({ onClose }: ProfileWizardProps) {
     setDetecting(true)
     try {
       const paths = await api.profiles.autoDetect()
+      console.log('Auto-detect results:', paths)
       setDetectedPaths(paths)
       setShowDetected(true)
       if (paths.length === 1) {
         setKspPath(paths[0].path)
         if (!name.trim()) setName(`KSP ${paths[0].version}`)
       }
+    } catch (err) {
+      console.error('Auto-detect failed:', err)
+      setDetectedPaths([])
+      setShowDetected(true)
     } finally {
       setDetecting(false)
     }

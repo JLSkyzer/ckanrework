@@ -6,6 +6,8 @@ interface ModState {
   mods: ModRow[]
   modCount: number
   loading: boolean
+  syncing: boolean
+  syncStatus: string
   spacedockCache: Map<string, SpaceDockCacheRow>
 
   fetchMods: () => Promise<void>
@@ -13,12 +15,15 @@ interface ModState {
   fetchSpaceDockData: (identifier: string) => Promise<SpaceDockCacheRow | null>
   fetchModVersions: (identifier: string) => Promise<ModVersionRow[]>
   syncMeta: () => Promise<void>
+  syncIfNeeded: () => Promise<void>
 }
 
 export const useModStore = create<ModState>((set, get) => ({
   mods: [],
   modCount: 0,
   loading: false,
+  syncing: false,
+  syncStatus: '',
   spacedockCache: new Map(),
 
   fetchMods: async () => {
@@ -74,12 +79,23 @@ export const useModStore = create<ModState>((set, get) => ({
   },
 
   syncMeta: async () => {
-    set({ loading: true })
+    set({ syncing: true, syncStatus: 'Downloading CKAN mod registry...' })
     try {
       await api.meta.sync()
+      set({ syncStatus: 'Indexing mods...' })
       await get().fetchMods()
+      set({ syncStatus: '' })
     } finally {
-      set({ loading: false })
+      set({ syncing: false })
+    }
+  },
+
+  syncIfNeeded: async () => {
+    const count = await api.mods.getCount()
+    if (count === 0) {
+      await get().syncMeta()
+    } else {
+      await get().fetchMods()
     }
   },
 }))
