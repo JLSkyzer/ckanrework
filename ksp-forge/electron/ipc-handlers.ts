@@ -1,4 +1,5 @@
 import { ipcMain, dialog, BrowserWindow } from 'electron'
+import type { SpaceDockCacheRow } from './types'
 import type { DatabaseService } from './services/database'
 import type { MetaSyncService } from './services/meta-sync'
 import type { SpaceDockService } from './services/spacedock'
@@ -41,9 +42,21 @@ export function registerIpcHandlers(services: Services): void {
     return db.getModCount()
   })
 
+  ipcMain.handle('mods:kspVersions', () => {
+    return db.getDistinctKspVersions()
+  })
+
   // --- SpaceDock ---
   ipcMain.handle('spacedock:fetch', (_event, identifier: string) => {
     return spaceDock.fetchModData(identifier)
+  })
+
+  ipcMain.handle('spacedock:fetchBatch', async (_event, identifiers: string[]) => {
+    const map = await spaceDock.fetchBatch(identifiers)
+    // Convert Map to plain object for IPC serialization
+    const obj: Record<string, SpaceDockCacheRow> = {}
+    for (const [k, v] of map) obj[k] = v
+    return obj
   })
 
   // --- Resolver ---

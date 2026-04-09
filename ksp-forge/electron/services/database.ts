@@ -307,6 +307,15 @@ export class DatabaseService {
     return row.count
   }
 
+  getDistinctKspVersions(): string[] {
+    const rows = this.db.prepare(`
+      SELECT DISTINCT ksp_version FROM mods
+      WHERE ksp_version IS NOT NULL AND ksp_version != '' AND ksp_version != 'any'
+      ORDER BY ksp_version DESC
+    `).all() as { ksp_version: string }[]
+    return rows.map(r => r.ksp_version)
+  }
+
   runInTransaction(fn: () => void): void {
     this.db.transaction(fn)()
   }

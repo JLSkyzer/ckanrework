@@ -7,9 +7,11 @@ const api = {
     search: (query: string) => ipcRenderer.invoke('mods:search', query),
     getVersions: (identifier: string) => ipcRenderer.invoke('mods:getVersions', identifier),
     getCount: () => ipcRenderer.invoke('mods:getCount'),
+    kspVersions: () => ipcRenderer.invoke('mods:kspVersions') as Promise<string[]>,
   },
   spacedock: {
     fetch: (identifier: string) => ipcRenderer.invoke('spacedock:fetch', identifier),
+    fetchBatch: (identifiers: string[]) => ipcRenderer.invoke('spacedock:fetchBatch', identifiers) as Promise<Record<string, any>>,
   },
   resolver: {
     resolve: (identifiers: string[], kspVersion: string, profileId?: string) =>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useModStore } from '../../stores/mod-store'
 import { useProfileStore } from '../../stores/profile-store'
@@ -31,7 +31,7 @@ function getModKspVersion(mod: { ksp_version: string | null; ksp_version_min: st
 }
 
 export function ModGrid({ filter = 'all' }: ModGridProps) {
-  const { mods, loading } = useModStore()
+  const { mods, loading, fetchSpaceDockBatch, spacedockCache } = useModStore()
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
   const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
   const { getActiveProfile } = useProfileStore()
@@ -102,6 +102,27 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
     estimateSize: () => CARD_HEIGHT + GAP,
     overscan: 3,
   })
+
+  // Batch-prefetch SpaceDock data for visible cards
+  const prefetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const visibleItems = virtualizer.getVirtualItems()
+
+  useEffect(() => {
+    if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current)
+    prefetchTimeoutRef.current = setTimeout(() => {
+      const ids: string[] = []
+      for (const row of visibleItems) {
+        const start = row.index * columns
+        const rowMods = displayedMods.slice(start, start + columns)
+        for (const m of rowMods) {
+          if (m.spacedock_id && !spacedockCache.has(m.identifier)) {
+            ids.push(m.identifier)
+          }
+        }
+      }
+      if (ids.length > 0) fetchSpaceDockBatch(ids)
+    }, 150) // debounce scroll
+  }, [visibleItems.length > 0 ? visibleItems[0]?.index : -1, columns])
 
   const title = isInstalledView ? 'Installed Mods' : 'Discover Mods'
 

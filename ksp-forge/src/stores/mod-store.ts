@@ -11,10 +11,13 @@ interface ModState {
   syncProgress: number
   spacedockCache: Map<string, SpaceDockCacheRow>
 
+  kspVersions: string[]
   fetchMods: () => Promise<void>
   searchMods: (query: string) => Promise<void>
   fetchSpaceDockData: (identifier: string) => Promise<SpaceDockCacheRow | null>
+  fetchSpaceDockBatch: (identifiers: string[]) => Promise<void>
   fetchModVersions: (identifier: string) => Promise<ModVersionRow[]>
+  fetchKspVersions: () => Promise<void>
   syncMeta: () => Promise<void>
   syncIfNeeded: () => Promise<void>
 }
@@ -26,6 +29,7 @@ export const useModStore = create<ModState>((set, get) => ({
   syncing: false,
   syncStatus: '',
   syncProgress: 0,
+  kspVersions: [],
   spacedockCache: new Map(),
 
   fetchMods: async () => {
@@ -71,6 +75,24 @@ export const useModStore = create<ModState>((set, get) => ({
     }
   },
 
+  fetchSpaceDockBatch: async (identifiers: string[]) => {
+    // Filter out already cached
+    const { spacedockCache } = get()
+    const toFetch = identifiers.filter(id => !spacedockCache.has(id))
+    if (toFetch.length === 0) return
+
+    try {
+      const results = await api.spacedock.fetchBatch(toFetch)
+      set((state) => {
+        const next = new Map(state.spacedockCache)
+        for (const [k, v] of Object.entries(results)) {
+          next.set(k, v as SpaceDockCacheRow)
+        }
+        return { spacedockCache: next }
+      })
+    } catch { /* ignore */ }
+  },
+
   fetchModVersions: async (identifier) => {
     try {
       const versions: ModVersionRow[] = await api.mods.getVersions(identifier)
@@ -102,6 +124,13 @@ export const useModStore = create<ModState>((set, get) => ({
     }
   },
 
+  fetchKspVersions: async () => {
+    try {
+      const versions = await api.mods.kspVersions()
+      set({ kspVersions: versions ?? [] })
+    } catch { /* ignore */ }
+  },
+
   syncIfNeeded: async () => {
     const count = await api.mods.getCount()
     if (count === 0) {
@@ -109,5 +138,6 @@ export const useModStore = create<ModState>((set, get) => ({
     } else {
       await get().fetchMods()
     }
+    await get().fetchKspVersions()
   },
 }))

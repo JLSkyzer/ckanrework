@@ -3,6 +3,7 @@ import type { DatabaseService } from './database'
 
 const SPACEDOCK_API = 'https://spacedock.info/api'
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000
+const CONCURRENT_FETCHES = 5
 
 interface SpaceDockModResponse {
   name: string
@@ -22,18 +23,33 @@ interface SpaceDockModResponse {
 
 export class SpaceDockService {
   private db: DatabaseService
+  private inflight = new Map<string, Promise<SpaceDockCacheRow | null>>()
 
   constructor(db: DatabaseService) {
     this.db = db
   }
 
   async fetchModData(modIdentifier: string): Promise<SpaceDockCacheRow | null> {
+    // Return cached if fresh
     const cached = this.db.getSpaceDockCache(modIdentifier)
     if (cached && Date.now() - cached.fetched_at < CACHE_TTL_MS) {
       return cached
     }
+
+    // Deduplicate in-flight requests
+    const existing = this.inflight.get(modIdentifier)
+    if (existing) return existing
+
+    const promise = this._fetch(modIdentifier, cached)
+    this.inflight.set(modIdentifier, promise)
+    promise.finally(() => this.inflight.delete(modIdentifier))
+    return promise
+  }
+
+  private async _fetch(modIdentifier: string, cached: SpaceDockCacheRow | null): Promise<SpaceDockCacheRow | null> {
     const mod = this.db.getMod(modIdentifier)
     if (!mod?.spacedock_id) return null
+
     try {
       const response = await fetch(`${SPACEDOCK_API}/mod/${mod.spacedock_id}`)
       if (!response.ok) return cached ?? null
@@ -55,10 +71,19 @@ export class SpaceDockService {
     }
   }
 
-  async fetchBatch(identifiers: string[]): Promise<void> {
-    for (const id of identifiers) {
-      await this.fetchModData(id)
-      await new Promise(resolve => setTimeout(resolve, 100))
+  async fetchBatch(identifiers: string[]): Promise<Map<string, SpaceDockCacheRow>> {
+    const results = new Map<string, SpaceDockCacheRow>()
+
+    // Process in parallel chunks
+    for (let i = 0; i < identifiers.length; i += CONCURRENT_FETCHES) {
+      const chunk = identifiers.slice(i, i + CONCURRENT_FETCHES)
+      const promises = chunk.map(async (id) => {
+        const data = await this.fetchModData(id)
+        if (data) results.set(id, data)
+      })
+      await Promise.all(promises)
     }
+
+    return results
   }
 }

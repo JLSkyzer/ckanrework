@@ -2,11 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useUiStore } from '../../stores/ui-store'
 import { useModStore } from '../../stores/mod-store'
 
-const KSP_VERSIONS = [
-  '1.12', '1.11', '1.10', '1.9', '1.8', '1.7', '1.6', '1.5', '1.4', '1.3', '1.2', '1.1', '1.0',
-  '0.90', '0.25', '0.24', '0.23',
-]
-
 export function SearchBar() {
   const {
     searchQuery, sortBy, filterKspVersionMin, filterKspVersionMax,
@@ -14,7 +9,7 @@ export function SearchBar() {
     setFilterKspVersionMin, setFilterKspVersionMax,
     setFilterCompatibleOnly, resetFilters,
   } = useUiStore()
-  const { searchMods, fetchMods } = useModStore()
+  const { searchMods, fetchMods, kspVersions } = useModStore()
 
   const [localQuery, setLocalQuery] = useState(searchQuery)
   const [showFilters, setShowFilters] = useState(false)
@@ -72,45 +67,41 @@ export function SearchBar() {
         </button>
 
         {/* Sort dropdown */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="bg-space-bg border border-space-border text-space-text text-sm rounded-lg px-2 py-2 focus:outline-none focus:border-space-accent/50 cursor-pointer"
-          >
-            <option value="downloads">Most Downloaded</option>
-            <option value="name">Name A-Z</option>
-            <option value="updated">Recently Updated</option>
-          </select>
-        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as any)}
+          className="select-dark"
+        >
+          <option value="downloads">Most Downloaded</option>
+          <option value="name">Name A-Z</option>
+          <option value="updated">Recently Updated</option>
+        </select>
       </div>
 
       {/* Filter panel */}
       {showFilters && (
         <div className="px-4 pb-3 flex items-center gap-4 flex-wrap">
-          {/* KSP Version Range */}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-space-text-muted">KSP Version:</span>
+            <span className="text-xs text-space-text-muted">KSP:</span>
             <select
               value={filterKspVersionMin}
               onChange={(e) => setFilterKspVersionMin(e.target.value)}
-              className="bg-space-bg border border-space-border text-space-text text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-space-accent/50 cursor-pointer"
+              className="select-dark text-xs"
             >
-              <option value="">Min</option>
-              {KSP_VERSIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              <option value="">Min version</option>
+              {kspVersions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
-            <span className="text-xs text-space-text-muted">to</span>
+            <span className="text-xs text-space-text-muted">—</span>
             <select
               value={filterKspVersionMax}
               onChange={(e) => setFilterKspVersionMax(e.target.value)}
-              className="bg-space-bg border border-space-border text-space-text text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-space-accent/50 cursor-pointer"
+              className="select-dark text-xs"
             >
-              <option value="">Max</option>
-              {KSP_VERSIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              <option value="">Max version</option>
+              {kspVersions.map(v => <option key={v} value={v}>{v}</option>)}
             </select>
           </div>
 
-          {/* Compatible only toggle */}
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -118,16 +109,15 @@ export function SearchBar() {
               onChange={(e) => setFilterCompatibleOnly(e.target.checked)}
               className="accent-[#6366f1] w-3.5 h-3.5"
             />
-            <span className="text-xs text-space-text-secondary">Compatible with active profile only</span>
+            <span className="text-xs text-space-text-secondary">Compatible with profile</span>
           </label>
 
-          {/* Reset */}
           {activeFilterCount > 0 && (
             <button
               onClick={resetFilters}
               className="text-xs text-[#ef4444] hover:text-[#f87171] transition-colors cursor-pointer ml-auto"
             >
-              Reset filters
+              Reset
             </button>
           )}
         </div>

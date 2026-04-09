@@ -1,4 +1,4 @@
-import { memo, useEffect, useState, useCallback } from 'react'
+import { memo, useCallback } from 'react'
 import type { ModRow, SpaceDockCacheRow } from '../../../electron/types'
 import { useModStore } from '../../stores/mod-store'
 import { useUiStore } from '../../stores/ui-store'
@@ -12,21 +12,11 @@ interface ModCardProps {
 
 export const ModCard = memo(function ModCard({ mod, isInstalled }: ModCardProps) {
   const { openModDetail } = useUiStore()
-  const { fetchSpaceDockData, spacedockCache } = useModStore()
+  const { spacedockCache } = useModStore()
   const { requestInstall } = useInstall()
-  const [sdData, setSdData] = useState<SpaceDockCacheRow | null>(null)
 
-  // Fetch SpaceDock data (safe now with virtual scroll — only ~20 cards mounted)
-  useEffect(() => {
-    const cached = spacedockCache.get(mod.identifier)
-    if (cached) {
-      setSdData(cached)
-      return
-    }
-    if (mod.spacedock_id) {
-      fetchSpaceDockData(mod.identifier).then(setSdData)
-    }
-  }, [mod.identifier])
+  // Read from cache (batch fetched by ModGrid)
+  const sdData = spacedockCache.get(mod.identifier) ?? null
 
   const handleInstall = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
