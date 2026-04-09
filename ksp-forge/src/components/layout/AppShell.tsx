@@ -10,13 +10,25 @@ import { SettingsView } from '../settings/SettingsView'
 
 export function AppShell() {
   const { currentView } = useUiStore()
-  const { syncIfNeeded, syncing, syncStatus, syncProgress } = useModStore()
-  const { fetchProfiles } = useProfileStore()
+  const { syncIfNeeded, syncing, syncStatus, syncProgress, modCount } = useModStore()
+  const { fetchProfiles, activeProfileId, fetchInstalledMods } = useProfileStore()
 
   useEffect(() => {
     syncIfNeeded()
     fetchProfiles()
   }, [])
+
+  // Auto-scan GameData for already installed mods after sync completes
+  useEffect(() => {
+    if (!syncing && modCount > 0 && activeProfileId) {
+      window.electronAPI?.profiles?.scanInstalled(activeProfileId).then((result) => {
+        if (result?.found > 0) {
+          console.log(`Auto-detected ${result.found} installed mods:`, result.mods)
+          fetchInstalledMods(activeProfileId)
+        }
+      }).catch(() => {})
+    }
+  }, [syncing, modCount, activeProfileId])
 
   const renderContent = () => {
     switch (currentView) {

@@ -36,6 +36,7 @@ const api = {
     validatePath: (kspPath: string) => ipcRenderer.invoke('profiles:validatePath', kspPath),
     getInstalled: (profileId: string) => ipcRenderer.invoke('profiles:getInstalled', profileId),
     autoDetect: () => ipcRenderer.invoke('profiles:autoDetect') as Promise<{ path: string; source: string; version: string }[]>,
+    scanInstalled: (profileId: string) => ipcRenderer.invoke('profiles:scanInstalled', profileId) as Promise<{ found: number; mods: string[] }>,
   },
   meta: {
     sync: () => ipcRenderer.invoke('meta:sync'),

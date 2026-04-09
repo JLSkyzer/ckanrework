@@ -120,6 +120,10 @@ export function registerIpcHandlers(services: Services): void {
     return { valid: false, message: 'No GameData folder found — is this a KSP install?' }
   })
 
+  ipcMain.handle('profiles:scanInstalled', (_event, profileId: string) => {
+    return profile.scanInstalledMods(profileId)
+  })
+
   ipcMain.handle('profiles:autoDetect', () => {
     return profile.autoDetectKspPaths()
   })
