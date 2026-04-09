@@ -6,6 +6,7 @@ import { useUiStore } from '../../stores/ui-store'
 import { SearchBar } from '../layout/SearchBar'
 import { ModCard } from './ModCard'
 import { InstallDialog } from '../install/InstallDialog'
+import { DownloadProgress } from '../install/DownloadProgress'
 import { useInstall } from '../../hooks/use-install'
 
 interface ModGridProps {
@@ -219,6 +220,8 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
       {showDialog && resolution && (
         <InstallDialog resolution={resolution} installing={installing} onConfirm={confirmInstall} onCancel={cancelInstall} />
       )}
+
+      <DownloadProgress progress={progress} />
     </div>
   )
 }

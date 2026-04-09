@@ -344,8 +344,14 @@ export function ModDetail() {
                 <button
                   onClick={async () => {
                     if (!activeProfileId) return
-                    await window.electronAPI?.uninstallMod?.(mod.identifier, activeProfileId)
-                    await fetchInstalledMods(activeProfileId)
+                    const prof = useProfileStore.getState().getActiveProfile()
+                    if (!prof) return
+                    try {
+                      await window.electronAPI.installer.uninstall(activeProfileId, mod.identifier, prof.ksp_path)
+                      await fetchInstalledMods(activeProfileId)
+                    } catch (err) {
+                      console.error('Uninstall failed:', err)
+                    }
                   }}
                   className="
                     w-full py-2.5 rounded-lg text-sm font-semibold

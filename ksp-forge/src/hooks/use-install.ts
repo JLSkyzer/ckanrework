@@ -4,9 +4,11 @@ import { useProfileStore } from '../stores/profile-store'
 import type { ResolutionResult, ResolvedMod } from '../../electron/services/resolver'
 
 export interface InstallProgress {
+  active: boolean
   current: number
   total: number
   currentName: string
+  failed: string[]
 }
 
 export function useInstall() {
@@ -15,10 +17,12 @@ export function useInstall() {
   const [resolution, setResolution] = useState<ResolutionResult | null>(null)
   const [showDialog, setShowDialog] = useState(false)
   const [installing, setInstalling] = useState(false)
-  const [progress, setProgress] = useState<{ current: number; total: number; currentName: string }>({
+  const [progress, setProgress] = useState<InstallProgress>({
+    active: false,
     current: 0,
     total: 0,
     currentName: '',
+    failed: [],
   })
 
   const requestInstall = useCallback(
@@ -49,22 +53,30 @@ export function useInstall() {
     const mods: ResolvedMod[] = resolution.toInstall
     setInstalling(true)
     setShowDialog(false)
-    setProgress({ current: 0, total: mods.length, currentName: '' })
+    setProgress({ active: true, current: 0, total: mods.length, currentName: '', failed: [] })
 
-    try {
-      for (let i = 0; i < mods.length; i++) {
-        const mod = mods[i]
-        setProgress({ current: i, total: mods.length, currentName: mod.identifier })
+    const failed: string[] = []
+
+    for (let i = 0; i < mods.length; i++) {
+      const mod = mods[i]
+      setProgress(p => ({ ...p, current: i, currentName: mod.identifier }))
+      try {
         await api.installer.install(mod, profile.ksp_path, profile.id)
+      } catch (err) {
+        console.error(`Failed to install ${mod.identifier}:`, err)
+        failed.push(mod.identifier)
       }
-      setProgress({ current: mods.length, total: mods.length, currentName: '' })
-      await fetchInstalledMods(profile.id)
-    } catch (err) {
-      console.error('Install failed:', err)
-    } finally {
+    }
+
+    setProgress(p => ({ ...p, current: mods.length, currentName: '', failed }))
+    await fetchInstalledMods(profile.id)
+
+    // Keep overlay visible for 2s to show completion
+    setTimeout(() => {
+      setProgress({ active: false, current: 0, total: 0, currentName: '', failed: [] })
       setInstalling(false)
       setResolution(null)
-    }
+    }, 2000)
   }, [resolution, activeProfileId, getActiveProfile, fetchInstalledMods])
 
   const cancelInstall = useCallback(() => {
