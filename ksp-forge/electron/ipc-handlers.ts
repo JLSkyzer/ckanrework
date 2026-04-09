@@ -90,7 +90,12 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   ipcMain.handle('profiles:validatePath', (_event, kspPath: string) => {
-    return profile.validateKspPath(kspPath)
+    const valid = profile.validateKspPath(kspPath)
+    if (valid) {
+      const kspVersion = profile.detectKspVersion(kspPath)
+      return { valid: true, message: 'Valid KSP installation', kspVersion }
+    }
+    return { valid: false, message: 'No GameData folder found — is this a KSP install?' }
   })
 
   ipcMain.handle('profiles:autoDetect', () => {
