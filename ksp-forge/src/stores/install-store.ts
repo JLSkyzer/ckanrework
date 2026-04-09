@@ -8,6 +8,9 @@ export interface InstallProgress {
   current: number
   total: number
   currentName: string
+  currentStatus: string // 'downloading' | 'verifying' | 'extracting' | ''
+  currentBytes: number
+  currentTotalBytes: number | null
   failed: string[]
   queue: number
 }
@@ -29,7 +32,7 @@ export const useInstallStore = create<InstallState>((set, get) => ({
   resolution: null,
   showDialog: false,
   installing: false,
-  progress: { active: false, current: 0, total: 0, currentName: '', failed: [], queue: 0 },
+  progress: { active: false, current: 0, total: 0, currentName: '', currentStatus: '', currentBytes: 0, currentTotalBytes: null, failed: [], queue: 0 },
   _queue: [],
   _processing: false,
 
@@ -74,6 +77,19 @@ async function processQueue() {
 
   useInstallStore.setState({ _processing: true })
 
+  // Listen for per-mod download/extract progress from main process
+  const cleanup = api.installer.onProgress((data: any) => {
+    if (data.type === 'download-progress') {
+      useInstallStore.setState(s => ({
+        progress: { ...s.progress, currentStatus: 'downloading', currentBytes: data.downloaded, currentTotalBytes: data.total },
+      }))
+    } else if (data.type === 'status') {
+      useInstallStore.setState(s => ({
+        progress: { ...s.progress, currentStatus: data.status, currentBytes: 0, currentTotalBytes: null },
+      }))
+    }
+  })
+
   while (true) {
     const { _queue } = useInstallStore.getState()
     if (_queue.length === 0) break
@@ -83,7 +99,7 @@ async function processQueue() {
     useInstallStore.setState({
       _queue: remaining,
       installing: true,
-      progress: { active: true, current: 0, total: mods.length, currentName: '', failed: [], queue: remaining.length },
+      progress: { active: true, current: 0, total: mods.length, currentName: '', currentStatus: '', currentBytes: 0, currentTotalBytes: null, failed: [], queue: remaining.length },
     })
 
     const profile = useProfileStore.getState().getActiveProfile()
@@ -94,7 +110,7 @@ async function processQueue() {
     for (let i = 0; i < mods.length; i++) {
       const mod = mods[i]
       useInstallStore.setState(s => ({
-        progress: { ...s.progress, current: i, currentName: mod.identifier, queue: s._queue.length },
+        progress: { ...s.progress, current: i, currentName: mod.identifier, currentStatus: 'downloading', currentBytes: 0, currentTotalBytes: null, queue: s._queue.length },
       }))
 
       try {
@@ -106,16 +122,18 @@ async function processQueue() {
     }
 
     useInstallStore.setState(s => ({
-      progress: { ...s.progress, current: mods.length, currentName: '', failed, queue: s._queue.length },
+      progress: { ...s.progress, current: mods.length, currentName: '', currentStatus: '', currentBytes: 0, currentTotalBytes: null, failed, queue: s._queue.length },
     }))
 
     await useProfileStore.getState().fetchInstalledMods(profile.id)
   }
 
+  cleanup()
+
   // Done — show completion for 3s
   setTimeout(() => {
     useInstallStore.setState({
-      progress: { active: false, current: 0, total: 0, currentName: '', failed: [], queue: 0 },
+      progress: { active: false, current: 0, total: 0, currentName: '', currentStatus: '', currentBytes: 0, currentTotalBytes: null, failed: [], queue: 0 },
       installing: false,
       _processing: false,
     })

@@ -25,6 +25,11 @@ const api = {
       ipcRenderer.invoke('installer:install', item, kspPath, profileId),
     uninstall: (profileId: string, identifier: string, kspPath: string) =>
       ipcRenderer.invoke('installer:uninstall', profileId, identifier, kspPath),
+    onProgress: (callback: (data: any) => void) => {
+      const handler = (_event: any, data: any) => callback(data)
+      ipcRenderer.on('installer:progress', handler)
+      return () => ipcRenderer.removeListener('installer:progress', handler)
+    },
   },
   profiles: {
     getAll: () => ipcRenderer.invoke('profiles:getAll'),

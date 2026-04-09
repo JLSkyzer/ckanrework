@@ -92,9 +92,13 @@ export function registerIpcHandlers(services: Services): void {
         }
       })
 
+      const win = BrowserWindow.getFocusedWindow()
       worker.on('message', (msg: any) => {
         if (msg.type === 'done') resolve(msg.files)
         else if (msg.type === 'error') reject(new Error(msg.message))
+        else if (msg.type === 'download-progress' || msg.type === 'status') {
+          win?.webContents.send('installer:progress', { identifier: item.identifier, ...msg })
+        }
       })
       worker.on('error', reject)
     })
