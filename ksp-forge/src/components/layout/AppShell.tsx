@@ -10,7 +10,7 @@ import { SettingsView } from '../settings/SettingsView'
 
 export function AppShell() {
   const { currentView } = useUiStore()
-  const { syncIfNeeded, syncing, syncStatus } = useModStore()
+  const { syncIfNeeded, syncing, syncStatus, syncProgress } = useModStore()
   const { fetchProfiles } = useProfileStore()
 
   useEffect(() => {
@@ -41,11 +41,31 @@ export function AppShell() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <main className="flex-1 overflow-hidden">
           {syncing ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4">
-              <div className="w-12 h-12 border-4 border-[rgba(99,102,241,0.2)] border-t-[#6366f1] rounded-full animate-spin" />
-              <p className="text-[#a78bfa] font-medium">{syncStatus || 'Syncing...'}</p>
-              <p className="text-xs text-[rgba(148,163,184,0.5)]">
-                First sync downloads the CKAN mod registry — this may take a few minutes
+            <div className="flex flex-col items-center justify-center h-full gap-5 px-8">
+              <h1
+                className="text-3xl font-bold"
+                style={{
+                  background: 'linear-gradient(135deg, #a78bfa, #818cf8)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                ★ KSP Forge
+              </h1>
+              <p className="text-[#a78bfa] font-medium text-sm">{syncStatus || 'Syncing...'}</p>
+              <div className="w-full max-w-md">
+                <div className="h-2 bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#6366f1] to-[#a78bfa] rounded-full transition-all duration-300"
+                    style={{ width: `${syncProgress}%` }}
+                  />
+                </div>
+                {syncProgress > 0 && (
+                  <p className="text-xs text-[rgba(148,163,184,0.4)] text-right mt-1">{syncProgress}%</p>
+                )}
+              </div>
+              <p className="text-xs text-[rgba(148,163,184,0.4)] text-center max-w-sm">
+                First launch — downloading and indexing the CKAN mod registry. This only happens once.
               </p>
             </div>
           ) : (

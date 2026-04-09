@@ -298,6 +298,10 @@ export class DatabaseService {
     return row.count
   }
 
+  runInTransaction(fn: () => void): void {
+    this.db.transaction(fn)()
+  }
+
   close(): void {
     this.db.close()
   }

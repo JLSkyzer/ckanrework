@@ -107,8 +107,11 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   // --- Meta ---
-  ipcMain.handle('meta:sync', async (_event) => {
-    const count = await metaSync.sync()
+  ipcMain.handle('meta:sync', async () => {
+    const win = BrowserWindow.getFocusedWindow()
+    const count = await metaSync.sync((current, total, phase) => {
+      win?.webContents.send('meta:sync-progress', { current, total, phase })
+    })
     return { count }
   })
 

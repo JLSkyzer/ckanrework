@@ -35,6 +35,11 @@ const api = {
   meta: {
     sync: () => ipcRenderer.invoke('meta:sync'),
     getLastSync: () => ipcRenderer.invoke('meta:getLastSync'),
+    onSyncProgress: (callback: (data: { current: number; total: number; phase: string }) => void) => {
+      const handler = (_event: any, data: { current: number; total: number; phase: string }) => callback(data)
+      ipcRenderer.on('meta:sync-progress', handler)
+      return () => ipcRenderer.removeListener('meta:sync-progress', handler)
+    },
   },
   dialog: {
     selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),

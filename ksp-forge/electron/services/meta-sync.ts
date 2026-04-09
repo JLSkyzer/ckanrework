@@ -5,6 +5,7 @@ import type { CkanMetadata, ModRow, ModVersionRow } from '../types'
 import { DatabaseService } from './database'
 
 const CKAN_META_REPO = 'https://github.com/KSP-CKAN/CKAN-meta.git'
+const BATCH_SIZE = 200
 
 export function extractSpaceDockId(url: string | undefined): number | null {
   if (!url) return null
@@ -65,35 +66,60 @@ export class MetaSyncService {
     this.git = simpleGit()
   }
 
-  async sync(onProgress?: (current: number, total: number) => void): Promise<number> {
+  async sync(onProgress?: (current: number, total: number, phase: string) => void): Promise<number> {
+    // Phase 1: Git clone or pull
+    onProgress?.(0, 1, 'downloading')
+
     if (!fs.existsSync(path.join(this.repoPath, '.git'))) {
       await this.git.clone(CKAN_META_REPO, this.repoPath, ['--depth', '1'])
     } else {
       this.git.cwd(this.repoPath)
       await this.git.pull()
     }
-    return this.indexAll(onProgress)
+
+    // Phase 2: Index in batches (non-blocking)
+    return this.indexAllAsync(onProgress)
   }
 
-  private indexAll(onProgress?: (current: number, total: number) => void): number {
+  private async indexAllAsync(onProgress?: (current: number, total: number, phase: string) => void): Promise<number> {
     const entries = fs.readdirSync(this.repoPath, { withFileTypes: true })
     const modDirs = entries.filter(e => e.isDirectory() && !e.name.startsWith('.'))
+    const total = modDirs.length
     let indexed = 0
-    for (const dir of modDirs) {
-      const modPath = path.join(this.repoPath, dir.name)
-      const ckanFiles = fs.readdirSync(modPath).filter(f => f.endsWith('.ckan'))
-      for (const file of ckanFiles) {
-        try {
-          const content = fs.readFileSync(path.join(modPath, file), 'utf-8')
-          const ckan = JSON.parse(content) as CkanMetadata
-          const { mod, version } = parseCkanFile(ckan)
-          this.db.upsertMod(mod)
-          this.db.upsertModVersion(version)
-        } catch { }
-      }
-      indexed++
-      onProgress?.(indexed, modDirs.length)
+
+    // Process in batches to avoid blocking the main thread
+    for (let i = 0; i < modDirs.length; i += BATCH_SIZE) {
+      const batch = modDirs.slice(i, i + BATCH_SIZE)
+
+      // Each batch runs in a single transaction (fast)
+      this.db.runInTransaction(() => {
+        for (const dir of batch) {
+          const modPath = path.join(this.repoPath, dir.name)
+          let ckanFiles: string[]
+          try {
+            ckanFiles = fs.readdirSync(modPath).filter(f => f.endsWith('.ckan'))
+          } catch {
+            continue
+          }
+          for (const file of ckanFiles) {
+            try {
+              const content = fs.readFileSync(path.join(modPath, file), 'utf-8')
+              const ckan = JSON.parse(content) as CkanMetadata
+              const { mod, version } = parseCkanFile(ckan)
+              this.db.upsertMod(mod)
+              this.db.upsertModVersion(version)
+            } catch { /* skip malformed */ }
+          }
+        }
+      })
+
+      indexed += batch.length
+      onProgress?.(indexed, total, 'indexing')
+
+      // Yield to event loop so Electron stays responsive
+      await new Promise(resolve => setImmediate(resolve))
     }
+
     return indexed
   }
 }
