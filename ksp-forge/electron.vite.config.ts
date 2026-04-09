@@ -3,9 +3,19 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// Only externalize native modules that can't be bundled
+const nativeModules = ['better-sqlite3']
+
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: [
+      '@electron-toolkit/utils',
+      'simple-git',
+      'unzip-stream',
+      'marked',
+      'dompurify',
+      'semver',
+    ] })],
     build: {
       lib: {
         entry: {
@@ -16,6 +26,7 @@ export default defineConfig({
         formats: ['cjs'],
       },
       rollupOptions: {
+        external: nativeModules,
         output: {
           entryFileNames: '[name].js',
         },
