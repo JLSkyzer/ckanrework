@@ -17,6 +17,7 @@ const api = {
   images: {
     scrape: (identifier: string) => ipcRenderer.invoke('images:scrape', identifier) as Promise<string[]>,
     forumDescription: (identifier: string) => ipcRenderer.invoke('images:forumDescription', identifier) as Promise<string | null>,
+    firstForumImage: (identifier: string) => ipcRenderer.invoke('images:firstForumImage', identifier) as Promise<string | null>,
   },
   resolver: {
     resolve: (identifiers: string[], kspVersion: string, profileId?: string) =>

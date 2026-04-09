@@ -165,6 +165,11 @@ export class ImageScraperService {
     this.db = db
   }
 
+  getCachedImages(modIdentifier: string): string[] | null {
+    const cached = this.cache.get(modIdentifier)
+    return cached ? cached.images : null
+  }
+
   async scrapeModImages(modIdentifier: string): Promise<string[]> {
     const cached = this.cache.get(modIdentifier)
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
@@ -212,7 +217,6 @@ export class ImageScraperService {
   }
 
   async scrapeForumDescription(modIdentifier: string): Promise<string | null> {
-    // Check cache
     const cached = this.descriptionCache.get(modIdentifier)
     if (cached && Date.now() - cached.fetchedAt < CACHE_TTL_MS) {
       return cached.html
@@ -224,26 +228,117 @@ export class ImageScraperService {
     const resources: Record<string, string> = mod.resources ? JSON.parse(mod.resources) : {}
     if (!resources.homepage?.includes('forum.kerbalspaceprogram.com')) return null
 
-    const html = await this.fetchWithBrowser(resources.homepage)
-    if (!html) return null
-
-    // Extract first post content
-    const patterns = [
-      /data-role="commentContent"[^>]*>([\s\S]*?)(?=<\/div>\s*<\/div>\s*(?:<aside|<ul\s+class="ipsList_reset))/i,
-      /class="[^"]*ipsType_richText\s+ipsContained[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-      /class="[^"]*ipsType_richText[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-    ]
-
-    for (const pattern of patterns) {
-      const match = pattern.exec(html)
-      if (match && match[1] && match[1].length > 100) {
-        const content = match[1].trim()
-        this.descriptionCache.set(modIdentifier, { html: content, fetchedAt: Date.now() })
-        return content
+    // Use browser to extract first post content via DOM selectors (not regex)
+    const result = await this.fetchForumFirstPost(resources.homepage)
+    if (result) {
+      console.log(`[forum-scraper] Description extracted: ${result.description.length} chars, ${result.images.length} images`)
+      this.descriptionCache.set(modIdentifier, { html: result.description, fetchedAt: Date.now() })
+      // Also cache images from this fetch
+      if (result.images.length > 0) {
+        const existingCache = this.cache.get(modIdentifier)
+        const existingImages = existingCache?.images || []
+        const allImages = [...new Set([...existingImages, ...result.images])]
+        this.cache.set(modIdentifier, { images: allImages, fetchedAt: Date.now() })
       }
+      return result.description
     }
 
     return null
+  }
+
+  private fetchForumFirstPost(url: string): Promise<{ description: string; images: string[] } | null> {
+    return new Promise((resolve) => {
+      console.log('[forum-scraper] Loading for description:', url)
+
+      let resolved = false
+      const done = (result: { description: string; images: string[] } | null, reason: string) => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(timer)
+        console.log('[forum-scraper] Description done:', reason)
+        try { win.destroy() } catch {}
+        resolve(result)
+      }
+
+      const timer = setTimeout(() => done(null, 'timeout'), 25000)
+
+      const win = new BrowserWindow({
+        width: 1280,
+        height: 900,
+        show: false,
+        webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+      })
+
+      let pollCount = 0
+      const pollForContent = async () => {
+        if (resolved) return
+        pollCount++
+
+        try {
+          const title: string = await win.webContents.executeJavaScript('document.title')
+          if (title.includes('Just a moment')) {
+            if (pollCount < 12) setTimeout(pollForContent, 2000)
+            else done(null, 'stuck on cloudflare')
+            return
+          }
+
+          // Extract first post content using DOM selectors
+          const result = await win.webContents.executeJavaScript(`
+            (function() {
+              // Invision Community: first post is the first [data-role="commentContent"]
+              const selectors = [
+                '[data-role="commentContent"]',
+                '.ipsType_richText.ipsContained',
+                '.ipsType_richText',
+                '.cPost_contentWrap',
+              ];
+
+              let content = null;
+              for (const sel of selectors) {
+                const el = document.querySelector(sel);
+                if (el && el.innerHTML.length > 100) {
+                  content = el.innerHTML;
+                  break;
+                }
+              }
+
+              if (!content) return null;
+
+              // Also extract images from the first post
+              const firstPost = document.querySelector('[data-role="commentContent"]') || document.querySelector('.ipsType_richText');
+              const images = [];
+              if (firstPost) {
+                firstPost.querySelectorAll('img').forEach(img => {
+                  const src = img.dataset.src || img.src;
+                  if (src && src.startsWith('http') && !src.includes('emoji') && !src.includes('icon')) {
+                    images.push(src);
+                  }
+                });
+              }
+
+              return { description: content, images: images };
+            })()
+          `)
+
+          if (result && result.description) {
+            done(result, 'extracted via DOM')
+          } else if (pollCount < 12) {
+            setTimeout(pollForContent, 2000)
+          } else {
+            done(null, 'no content found after polling')
+          }
+        } catch (err) {
+          if (pollCount < 12) setTimeout(pollForContent, 2000)
+          else done(null, 'error: ' + err)
+        }
+      }
+
+      win.webContents.on('did-finish-load', () => {
+        setTimeout(pollForContent, 2000)
+      })
+
+      win.loadURL(url).catch(() => done(null, 'loadURL error'))
+    })
   }
 
   private async fetchPage(url: string): Promise<string | null> {

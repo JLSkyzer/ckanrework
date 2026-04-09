@@ -77,6 +77,16 @@ export function registerIpcHandlers(services: Services): void {
     return imageScraper.scrapeForumDescription(identifier)
   })
 
+  ipcMain.handle('images:firstForumImage', async (_event, identifier: string) => {
+    // Try to get the first image from cached forum data
+    const cached = imageScraper.getCachedImages(identifier)
+    if (cached && cached.length > 0) return cached[0]
+    // If not cached yet, trigger a forum scrape and return first image
+    await imageScraper.scrapeForumDescription(identifier)
+    const images = imageScraper.getCachedImages(identifier)
+    return images && images.length > 0 ? images[0] : null
+  })
+
   // --- Resolver ---
   ipcMain.handle('resolver:resolve', (_event, identifiers: string[], kspVersion: string, profileId?: string) => {
     return resolver.resolve(identifiers, kspVersion, profileId)
