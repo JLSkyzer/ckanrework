@@ -44,6 +44,27 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
 
   const isInstalledView = currentView === 'installed' || filter === 'installed'
 
+  // Compute incompatible mods for the installed view
+  const activeProfile = getActiveProfile()
+  const incompatibleSet = useMemo(() => {
+    const set = new Set<string>()
+    if (!activeProfile || activeProfile.ksp_version === 'unknown') return set
+    const pv = activeProfile.ksp_version
+    for (const m of mods) {
+      if (!installedMods.some(im => im.identifier === m.identifier)) continue
+      if (m.ksp_version === 'any' || (!m.ksp_version && !m.ksp_version_min && !m.ksp_version_max)) continue
+      if (m.ksp_version) {
+        const mp = m.ksp_version.split('.')
+        const pp = pv.split('.')
+        if (mp[0] !== pp[0] || mp[1] !== pp[1]) set.add(m.identifier)
+      } else {
+        if (m.ksp_version_min && compareVersions(pv, m.ksp_version_min) < 0) set.add(m.identifier)
+        if (m.ksp_version_max && compareVersions(pv, m.ksp_version_max) > 0) set.add(m.identifier)
+      }
+    }
+    return set
+  }, [mods, installedMods, activeProfile?.ksp_version])
+
   useEffect(() => {
     if (activeProfileId) fetchInstalledMods(activeProfileId)
   }, [activeProfileId])
@@ -186,7 +207,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
                   }}
                 >
                   {rowMods.map((mod) => (
-                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} onInstall={handleCardInstall} />
+                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} incompatible={incompatibleSet.has(mod.identifier)} onInstall={handleCardInstall} />
                   ))}
                 </div>
               )

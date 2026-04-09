@@ -389,7 +389,7 @@ export function ModDetail() {
               {downloads != null && (
                 <MetaRow label="Downloads" value={formatDownloads(downloads)} />
               )}
-              <MetaRow label="Updated" value={formatDate(mod.updated_at)} />
+              <MetaRow label="Author" value={authorList} />
             </div>
 
             {/* Links */}

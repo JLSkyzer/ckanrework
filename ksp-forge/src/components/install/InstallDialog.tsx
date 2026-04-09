@@ -10,6 +10,9 @@ interface InstallDialogProps {
 export function InstallDialog({ resolution, onConfirm, onCancel }: InstallDialogProps) {
   const { success, toInstall, conflicts, missing, warnings } = resolution
 
+  const hasWarnings = warnings.length > 0 || missing.length > 0
+  const canInstall = success && toInstall.length > 0
+
   const directMods = toInstall.filter((m) => !m.isDependency)
   const depMods = toInstall.filter((m) => m.isDependency)
 
@@ -148,18 +151,20 @@ export function InstallDialog({ resolution, onConfirm, onCancel }: InstallDialog
           </button>
           <button
             onClick={onConfirm}
-            disabled={!success}
+            disabled={!canInstall}
             className={`
               px-5 py-2 rounded-lg text-sm font-semibold
               transition-colors
               ${
-                success
-                  ? 'bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)] text-white border border-[rgba(99,102,241,0.4)] cursor-pointer'
-                  : 'bg-[rgba(99,102,241,0.2)] text-[rgba(148,163,184,0.4)] border border-[rgba(99,102,241,0.15)] cursor-not-allowed'
+                !canInstall
+                  ? 'bg-[rgba(99,102,241,0.2)] text-[rgba(148,163,184,0.4)] border border-[rgba(99,102,241,0.15)] cursor-not-allowed'
+                  : hasWarnings
+                    ? 'bg-[rgba(245,158,11,0.8)] hover:bg-[rgba(245,158,11,1)] text-white border border-[rgba(245,158,11,0.4)] cursor-pointer'
+                    : 'bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)] text-white border border-[rgba(99,102,241,0.4)] cursor-pointer'
               }
             `}
           >
-            Install
+            {hasWarnings ? 'Install Anyway' : 'Install'}
           </button>
         </div>
       </div>

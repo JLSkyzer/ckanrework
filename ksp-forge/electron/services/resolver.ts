@@ -57,7 +57,8 @@ export class ResolverService {
       }
     }
 
-    return { success: conflicts.length === 0 && missing.length === 0, toInstall: allMods, conflicts, missing, warnings }
+    // Only real conflicts block installation. Missing deps and version warnings are non-blocking.
+    return { success: conflicts.length === 0, toInstall: allMods, conflicts, missing, warnings }
   }
 
   private resolveOne(

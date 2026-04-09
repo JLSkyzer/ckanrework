@@ -7,10 +7,11 @@ import { formatDownloads } from '../../lib/format'
 interface ModCardProps {
   mod: ModRow
   isInstalled: boolean
+  incompatible?: boolean
   onInstall: (identifier: string) => void
 }
 
-export const ModCard = memo(function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
+export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, onInstall }: ModCardProps) {
   const { openModDetail } = useUiStore()
   const { spacedockCache } = useModStore()
 
@@ -30,7 +31,7 @@ export const ModCard = memo(function ModCard({ mod, isInstalled, onInstall }: Mo
       className="
         group relative flex flex-col rounded-xl overflow-hidden cursor-pointer
         bg-[rgba(255,255,255,0.03)]
-        border border-[rgba(99,102,241,0.1)]
+        border ${incompatible && isInstalled ? 'border-[rgba(245,158,11,0.3)]' : 'border-[rgba(99,102,241,0.1)]'}
         transition-all duration-200
         hover:border-[rgba(99,102,241,0.3)]
         hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]
@@ -57,8 +58,10 @@ export const ModCard = memo(function ModCard({ mod, isInstalled, onInstall }: Mo
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(13,13,26,0.8)] to-transparent" />
 
         {isInstalled && (
-          <div className="absolute top-2 right-2 bg-[rgba(34,197,94,0.9)] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-            Installed
+          <div className={`absolute top-2 right-2 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+            incompatible ? 'bg-[rgba(245,158,11,0.9)]' : 'bg-[rgba(34,197,94,0.9)]'
+          }`}>
+            {incompatible ? '⚠ Installed' : 'Installed'}
           </div>
         )}
 
