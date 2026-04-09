@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import crypto from 'crypto'
+import zlib from 'zlib'
 import type { ProfileRow, InstalledModRow } from '../types'
 import type { DatabaseService } from './database'
 import type { ModCacheService } from './mod-cache'
@@ -265,23 +266,46 @@ export class ProfileService {
     return found
   }
 
-  scanInstalledMods(profileId: string): { found: number; mods: string[] } {
+  scanInstalledMods(profileId: string): { found: number; mods: string[]; fromCkan: number } {
     const profile = this.db.getProfile(profileId)
-    if (!profile) return { found: 0, mods: [] }
+    if (!profile) return { found: 0, mods: [], fromCkan: 0 }
 
     const gameDataPath = path.join(profile.ksp_path, 'GameData')
-    if (!fs.existsSync(gameDataPath)) return { found: 0, mods: [] }
+    if (!fs.existsSync(gameDataPath)) return { found: 0, mods: [], fromCkan: 0 }
 
-    // Get all folders/files in GameData (excluding stock)
+    const foundMods: string[] = []
+    const alreadyInstalled = new Set(this.db.getInstalledMods(profileId).map(m => m.identifier))
+    let fromCkan = 0
+
+    // --- Phase 1: Import from CKAN registry if it exists ---
+    const ckanRegistryMods = this.readCkanRegistry(profile.ksp_path)
+    for (const ckanMod of ckanRegistryMods) {
+      if (alreadyInstalled.has(ckanMod.identifier)) continue
+
+      // Verify mod exists in our DB
+      const dbMod = this.db.getMod(ckanMod.identifier)
+      if (!dbMod) continue
+
+      this.db.addInstalledMod({
+        profile_id: profileId,
+        identifier: ckanMod.identifier,
+        version: ckanMod.version,
+        installed_files: JSON.stringify(ckanMod.files),
+        installed_at: Date.now(),
+      })
+      alreadyInstalled.add(ckanMod.identifier)
+      foundMods.push(ckanMod.identifier)
+      fromCkan++
+    }
+
+    // --- Phase 2: Scan GameData folders ---
     const stockDirs = new Set(['Squad', 'SquadExpansion'])
     let entries: string[]
     try {
       entries = fs.readdirSync(gameDataPath)
         .filter(e => !stockDirs.has(e) && !e.startsWith('.'))
-    } catch { return { found: 0, mods: [] } }
+    } catch { return { found: foundMods.length, mods: foundMods, fromCkan } }
 
-    // Build a lookup: folder name in GameData → CKAN mod identifier
-    // Uses the "find" field from install directives in mod_versions
     const allMods = this.db.getAllMods()
     const folderToMod = new Map<string, { identifier: string; version: string }>()
 
@@ -299,7 +323,6 @@ export class ProfileService {
       } catch { /* skip */ }
     }
 
-    // Also try matching by identifier directly (many mods use identifier as folder name)
     for (const mod of allMods) {
       if (!folderToMod.has(mod.identifier)) {
         const versions = this.db.getModVersions(mod.identifier)
@@ -308,10 +331,6 @@ export class ProfileService {
         }
       }
     }
-
-    // Match GameData entries against known mods
-    const foundMods: string[] = []
-    const alreadyInstalled = new Set(this.db.getInstalledMods(profileId).map(m => m.identifier))
 
     for (const entry of entries) {
       const match = folderToMod.get(entry)
@@ -331,7 +350,57 @@ export class ProfileService {
       }
     }
 
-    return { found: foundMods.length, mods: foundMods }
+    return { found: foundMods.length, mods: foundMods, fromCkan }
+  }
+
+  private readCkanRegistry(kspPath: string): Array<{ identifier: string; version: string; files: string[] }> {
+    const results: Array<{ identifier: string; version: string; files: string[] }> = []
+
+    // CKAN stores its registry in <KSP>/CKAN/registry.json (plain or gzipped)
+    const registryPaths = [
+      path.join(kspPath, 'CKAN', 'registry.json'),
+      path.join(kspPath, 'CKAN', 'registry.json.gz'),
+    ]
+
+    let registryData: any = null
+
+    for (const regPath of registryPaths) {
+      if (!fs.existsSync(regPath)) continue
+      try {
+        let content: string
+        if (regPath.endsWith('.gz')) {
+          const compressed = fs.readFileSync(regPath)
+          content = zlib.gunzipSync(compressed).toString('utf-8')
+        } else {
+          content = fs.readFileSync(regPath, 'utf-8')
+        }
+        registryData = JSON.parse(content)
+        console.log(`[profile] Read CKAN registry from ${regPath}`)
+        break
+      } catch (err) {
+        console.log(`[profile] Failed to read CKAN registry ${regPath}:`, err)
+      }
+    }
+
+    if (!registryData) return results
+
+    // CKAN registry format: { "installed_modules": { "identifier": { "module": {...}, "files": [...] } } }
+    const installedModules = registryData.installed_modules || registryData.InstalledModules || {}
+
+    for (const [identifier, entry] of Object.entries(installedModules)) {
+      const modEntry = entry as any
+      const modInfo = modEntry.module || modEntry.Module || {}
+      const version = modInfo.version || modInfo.Version || 'unknown'
+      const files: string[] = modEntry.files || modEntry.Files || modEntry.installed_files || []
+
+      // CKAN files are relative to KSP root
+      const normalizedFiles = files.map((f: string) => f.replace(/\\/g, '/'))
+
+      results.push({ identifier, version, files: normalizedFiles })
+    }
+
+    console.log(`[profile] Found ${results.length} mods in CKAN registry`)
+    return results
   }
 
   private collectFiles(dirPath: string, basePath: string): string[] {
