@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useModStore } from '../../stores/mod-store'
+import { useUiStore } from '../../stores/ui-store'
 import { api } from '../../lib/ipc'
 import { formatDate } from '../../lib/format'
 
 export function SettingsView() {
   const { modCount, loading, syncMeta } = useModStore()
+  const { concurrentDownloads, setConcurrentDownloads } = useUiStore()
   const [lastSync, setLastSync] = useState<number | null>(null)
   const [syncing, setSyncing] = useState(false)
 
@@ -98,6 +100,33 @@ export function SettingsView() {
                   'Sync Now'
                 )}
               </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Downloads section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">
+            <span className="text-base">⬇</span>
+            <h3 className="text-base font-semibold text-white">Downloads</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(99,102,241,0.12)] p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white font-medium">Simultaneous downloads</p>
+                <p className="text-xs text-[rgba(148,163,184,0.6)] mt-0.5">
+                  Number of mods to download and install at the same time (1-5).
+                </p>
+              </div>
+              <input
+                type="number"
+                min={1}
+                max={5}
+                value={concurrentDownloads}
+                onChange={(e) => setConcurrentDownloads(parseInt(e.target.value, 10) || 1)}
+                className="w-16 px-3 py-1.5 rounded-lg text-sm text-white bg-[rgba(255,255,255,0.05)] border border-[rgba(99,102,241,0.2)] focus:border-[rgba(99,102,241,0.5)] focus:outline-none text-center"
+              />
             </div>
           </div>
         </section>

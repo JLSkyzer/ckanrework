@@ -1,4 +1,4 @@
-import type { InstallProgress } from '../../stores/install-store'
+import { useInstallStore, type InstallProgress } from '../../stores/install-store'
 import { formatSize } from '../../lib/format'
 
 const STATUS_LABELS: Record<string, string> = {
@@ -7,7 +7,16 @@ const STATUS_LABELS: Record<string, string> = {
   extracting: 'Extracting',
 }
 
-export function DownloadProgress({ progress }: { progress: InstallProgress }) {
+interface DownloadProgressProps {
+  progress: InstallProgress
+  collapsed: boolean
+  onToggleCollapse: () => void
+  onViewDetails: () => void
+}
+
+export function DownloadProgress({ progress, collapsed, onToggleCollapse, onViewDetails }: DownloadProgressProps) {
+  const _queue = useInstallStore(s => s._queue)
+
   if (!progress.active) return null
 
   const pct = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0
@@ -21,6 +30,47 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
 
   const statusLabel = STATUS_LABELS[progress.currentStatus] || ''
 
+  // Collapsed view: just a small clickable badge
+  if (collapsed) {
+    return (
+      <div
+        onClick={onToggleCollapse}
+        className="
+          fixed bottom-5 right-5 z-50
+          rounded-xl cursor-pointer
+          bg-[#12122a] border border-[rgba(99,102,241,0.3)]
+          shadow-[0_0_20px_rgba(99,102,241,0.15)]
+          px-4 py-2.5
+          flex items-center gap-3
+          hover:border-[rgba(99,102,241,0.5)] transition-colors
+        "
+      >
+        <span className={`text-xs font-semibold ${
+          done ? (hasFailed ? 'text-[rgba(245,158,11,0.9)]' : 'text-[rgba(74,222,128,0.9)]')
+            : 'text-[rgba(196,181,253,0.9)]'
+        }`}>
+          {done
+            ? (hasFailed ? 'Done with errors' : 'Complete')
+            : `Installing ${progress.current}/${progress.total}...`
+          }
+        </span>
+        {/* Thin progress bar */}
+        <div className="w-24 h-1.5 rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
+          <div
+            className="h-full rounded-full transition-all duration-300 ease-out"
+            style={{
+              width: `${pct}%`,
+              background: done
+                ? (hasFailed ? 'linear-gradient(90deg, #f59e0b, #eab308)' : 'linear-gradient(90deg, #22c55e, #16a34a)')
+                : 'linear-gradient(90deg, #7c3aed, #6366f1)',
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Expanded view
   return (
     <div
       className="
@@ -32,8 +82,8 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
         flex flex-col gap-2
       "
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header — clickable to collapse */}
+      <div className="flex items-center justify-between cursor-pointer" onClick={onToggleCollapse}>
         <span className={`text-xs font-semibold uppercase tracking-wider ${
           done ? (hasFailed ? 'text-[rgba(245,158,11,0.9)]' : 'text-[rgba(74,222,128,0.9)]')
             : 'text-[rgba(196,181,253,0.9)]'
@@ -96,7 +146,26 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
         />
       </div>
 
-      {progress.queue > 0 && !done && (
+      {/* Mini queue list */}
+      {_queue.length > 0 && !done && (
+        <div className="flex flex-col gap-1 mt-1 max-h-24 overflow-y-auto">
+          <p className="text-[10px] text-[rgba(100,116,139,0.6)] uppercase tracking-wider">Queue</p>
+          {_queue.slice(0, 2).map((batch, bi) =>
+            batch.slice(0, 3).map((mod) => (
+              <p key={`${bi}-${mod.identifier}`} className="text-[11px] text-[rgba(148,163,184,0.5)] truncate pl-2">
+                {mod.identifier}
+              </p>
+            ))
+          )}
+          {_queue.reduce((acc, b) => acc + b.length, 0) > 3 && (
+            <p className="text-[11px] text-[rgba(148,163,184,0.4)] pl-2">
+              +{_queue.reduce((acc, b) => acc + b.length, 0) - 3} more
+            </p>
+          )}
+        </div>
+      )}
+
+      {progress.queue > 0 && !done && _queue.length === 0 && (
         <p className="text-[11px] text-[rgba(148,163,184,0.5)]">
           +{progress.queue} more in queue
         </p>
@@ -107,6 +176,14 @@ export function DownloadProgress({ progress }: { progress: InstallProgress }) {
           Failed: {progress.failed.join(', ')}
         </p>
       )}
+
+      {/* View details link */}
+      <button
+        onClick={onViewDetails}
+        className="text-[11px] text-[rgba(99,102,241,0.7)] hover:text-[rgba(99,102,241,1)] text-left transition-colors cursor-pointer"
+      >
+        View details
+      </button>
     </div>
   )
 }

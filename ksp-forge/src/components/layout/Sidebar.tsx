@@ -1,5 +1,6 @@
 import { useUiStore, type ViewName } from '../../stores/ui-store'
 import { useProfileStore } from '../../stores/profile-store'
+import { useInstallStore } from '../../stores/install-store'
 
 interface NavItem {
   view: ViewName
@@ -10,6 +11,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { view: 'discover', label: 'Discover', icon: '🌐' },
   { view: 'installed', label: 'Installed', icon: '📦' },
+  { view: 'downloads', label: 'Downloads', icon: '⬇' },
   { view: 'profiles', label: 'Profiles', icon: '📋' },
   { view: 'settings', label: 'Settings', icon: '⚙️' },
 ]
@@ -17,6 +19,7 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const { currentView, setView } = useUiStore()
   const { getActiveProfile, installedMods } = useProfileStore()
+  const installProgress = useInstallStore(s => s.progress)
   const activeProfile = getActiveProfile()
 
   return (
@@ -44,7 +47,12 @@ export function Sidebar() {
               }`}
             >
               <span>{icon}</span>
-              <span>{label}</span>
+              <span className="flex-1">{label}</span>
+              {view === 'downloads' && installProgress.active && (
+                <span className="ml-auto text-[10px] bg-space-accent/20 text-space-accent px-1.5 py-0.5 rounded-full">
+                  {installProgress.current}/{installProgress.total}
+                </span>
+              )}
             </button>
           )
         })}

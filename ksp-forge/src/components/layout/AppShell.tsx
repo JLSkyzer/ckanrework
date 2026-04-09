@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { DownloadProgress } from '../install/DownloadProgress'
 import { useInstallStore } from '../../stores/install-store'
@@ -9,12 +9,16 @@ import { ModGrid } from '../mods/ModGrid'
 import { ModDetail } from '../mods/ModDetail'
 import { ProfileList } from '../profiles/ProfileList'
 import { SettingsView } from '../settings/SettingsView'
+import { DownloadsView } from '../downloads/DownloadsView'
 
 export function AppShell() {
   const { currentView } = useUiStore()
   const { syncIfNeeded, syncing, syncStatus, syncProgress, modCount } = useModStore()
   const installProgress = useInstallStore(s => s.progress)
+  const pendingRecovery = useInstallStore(s => s.pendingRecovery)
+  const { resumeRecovery, dismissRecovery, checkRecovery } = useInstallStore()
   const { fetchProfiles, activeProfileId, fetchInstalledMods } = useProfileStore()
+  const [overlayCollapsed, setOverlayCollapsed] = useState(true)
 
   useEffect(() => {
     syncIfNeeded()
@@ -30,6 +34,9 @@ export function AppShell() {
           fetchInstalledMods(activeProfileId)
         }
       }).catch(() => {})
+
+      // Check for crash-recovered queue
+      checkRecovery()
     }
   }, [syncing, modCount, activeProfileId])
 
@@ -39,6 +46,8 @@ export function AppShell() {
         return <ModGrid filter="all" />
       case 'installed':
         return <ModGrid filter="installed" />
+      case 'downloads':
+        return <DownloadsView />
       case 'mod-detail':
         return <ModDetail />
       case 'profiles':
@@ -88,7 +97,33 @@ export function AppShell() {
           )}
         </main>
       </div>
-      <DownloadProgress progress={installProgress} />
+      {/* Recovery banner */}
+      {pendingRecovery && pendingRecovery.length > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center p-4 bg-[rgba(0,0,0,0.6)]">
+          <div className="bg-[#12122a] border border-[rgba(99,102,241,0.3)] rounded-xl px-6 py-4 shadow-[0_0_30px_rgba(99,102,241,0.2)] max-w-md w-full flex flex-col gap-3">
+            <h3 className="text-sm font-semibold text-white">Resume pending downloads?</h3>
+            <p className="text-xs text-[rgba(148,163,184,0.7)]">
+              {pendingRecovery.reduce((acc, batch) => acc + batch.length, 0)} mod{pendingRecovery.reduce((acc, batch) => acc + batch.length, 0) !== 1 ? 's were' : ' was'} queued before the app closed.
+            </p>
+            <div className="flex items-center gap-3 justify-end">
+              <button
+                onClick={dismissRecovery}
+                className="px-3 py-1.5 rounded-lg text-xs text-[rgba(148,163,184,0.7)] hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={resumeRecovery}
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)] text-white transition-colors cursor-pointer"
+              >
+                Resume
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <DownloadProgress progress={installProgress} collapsed={overlayCollapsed} onToggleCollapse={() => setOverlayCollapsed(c => !c)} onViewDetails={() => { useUiStore.getState().setView('downloads'); setOverlayCollapsed(true) }} />
     </div>
   )
 }
