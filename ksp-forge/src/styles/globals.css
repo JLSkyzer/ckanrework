@@ -42,3 +42,13 @@ body::before {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.5);
 }
+
+/* Window drag region for frameless Electron window */
+.app-region-drag {
+  -webkit-app-region: drag;
+}
+.app-region-drag button,
+.app-region-drag a,
+.app-region-drag input {
+  -webkit-app-region: no-drag;
+}
