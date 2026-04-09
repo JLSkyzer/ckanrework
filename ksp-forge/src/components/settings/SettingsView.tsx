@@ -1,7 +1,158 @@
+import { useState, useEffect } from 'react'
+import { useModStore } from '../../stores/mod-store'
+import { api } from '../../lib/ipc'
+import { formatDate } from '../../lib/format'
+
 export function SettingsView() {
+  const { modCount, loading, syncMeta } = useModStore()
+  const [lastSync, setLastSync] = useState<number | null>(null)
+  const [syncing, setSyncing] = useState(false)
+
+  useEffect(() => {
+    api.meta.getLastSync().then((ts: number | null) => setLastSync(ts))
+  }, [])
+
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      await syncMeta()
+      const ts: number | null = await api.meta.getLastSync()
+      setLastSync(ts)
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold text-space-text mb-4">Settings</h2>
+    <div className="flex flex-col h-full overflow-y-auto">
+      <div className="max-w-2xl mx-auto w-full px-6 py-8 flex flex-col gap-8">
+        {/* Page title */}
+        <div>
+          <h2 className="text-2xl font-bold text-white">Settings</h2>
+          <p className="text-sm text-[rgba(148,163,184,0.6)] mt-0.5">
+            Configure KSP Forge
+          </p>
+        </div>
+
+        {/* Mod Registry section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">
+            <span className="text-base">📦</span>
+            <h3 className="text-base font-semibold text-white">Mod Registry</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(99,102,241,0.12)] p-5 flex flex-col gap-4">
+            {/* Stats row */}
+            <div className="flex items-start gap-8">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-[rgba(100,116,139,0.8)] uppercase tracking-wider">
+                  Indexed Mods
+                </span>
+                <span className="text-2xl font-bold text-white">
+                  {loading ? (
+                    <span className="text-base text-[rgba(99,102,241,0.7)] animate-pulse">
+                      Loading...
+                    </span>
+                  ) : (
+                    modCount.toLocaleString()
+                  )}
+                </span>
+              </div>
+              {lastSync != null && (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-[rgba(100,116,139,0.8)] uppercase tracking-wider">
+                    Last Synced
+                  </span>
+                  <span className="text-sm text-[rgba(148,163,184,0.8)]">
+                    {formatDate(lastSync)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Sync button + description */}
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-xs text-[rgba(100,116,139,0.7)] leading-relaxed flex-1">
+                Sync the CKAN mod registry to get the latest mods and updates.
+                This downloads metadata for all available KSP mods.
+              </p>
+              <button
+                onClick={handleSync}
+                disabled={syncing || loading}
+                className={`
+                  flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold
+                  transition-colors
+                  ${
+                    syncing || loading
+                      ? 'bg-[rgba(99,102,241,0.2)] text-[rgba(148,163,184,0.4)] border border-[rgba(99,102,241,0.15)] cursor-not-allowed'
+                      : 'bg-[rgba(99,102,241,0.9)] hover:bg-[rgba(99,102,241,1)] text-white border border-[rgba(99,102,241,0.4)] cursor-pointer'
+                  }
+                `}
+              >
+                {syncing ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full" />
+                    Syncing...
+                  </span>
+                ) : (
+                  'Sync Now'
+                )}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* About section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">
+            <span className="text-base">★</span>
+            <h3 className="text-base font-semibold text-white">About</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(99,102,241,0.12)] p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(99,102,241,0.3) 0%, rgba(139,92,246,0.2) 100%)',
+                  border: '1px solid rgba(99,102,241,0.2)',
+                }}
+              >
+                🚀
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-white">KSP Forge</h4>
+                <p className="text-xs text-[rgba(196,181,253,0.7)]">Version 1.0.0</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-[rgba(148,163,184,0.7)] leading-relaxed">
+              A modern mod manager for Kerbal Space Program, built with Electron and React.
+              Powered by the CKAN mod registry.
+            </p>
+
+            <div className="pt-1 border-t border-[rgba(99,102,241,0.08)]">
+              <p className="text-[10px] text-[rgba(100,116,139,0.6)] uppercase tracking-wider mb-2">
+                Credits
+              </p>
+              <ul className="flex flex-col gap-1.5">
+                <CreditRow label="Mod data" value="CKAN — The Comprehensive Kerbal Archive Network" />
+                <CreditRow label="Mod pages" value="SpaceDock" />
+                <CreditRow label="Built with" value="Electron, React, Vite, Tailwind CSS, better-sqlite3" />
+              </ul>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
+  )
+}
+
+function CreditRow({ label, value }: { label: string; value: string }) {
+  return (
+    <li className="flex items-baseline gap-2">
+      <span className="text-xs text-[rgba(100,116,139,0.7)] flex-shrink-0">{label}:</span>
+      <span className="text-xs text-[rgba(148,163,184,0.8)]">{value}</span>
+    </li>
   )
 }
