@@ -23,6 +23,7 @@ export interface CkanMetadata {
     bugtracker?: string
   }
   tags?: string[]
+  release_date?: string
 }
 
 export interface Relationship {
@@ -56,6 +57,7 @@ export interface ModRow {
   spacedock_id: number | null
   tags: string | null
   resources: string | null
+  release_date: string | null
   updated_at: number
 }
 

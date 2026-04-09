@@ -33,6 +33,7 @@ export function parseCkanFile(ckan: CkanMetadata): { mod: ModRow; version: ModVe
     spacedock_id: spacedockId,
     tags: ckan.tags ? JSON.stringify(ckan.tags) : null,
     resources: ckan.resources ? JSON.stringify(ckan.resources) : null,
+    release_date: ckan.release_date ?? null,
     updated_at: Date.now()
   }
 

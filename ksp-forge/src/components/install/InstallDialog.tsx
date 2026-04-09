@@ -106,7 +106,7 @@ export function InstallDialog({ resolution, onConfirm, onCancel }: InstallDialog
                       </span>
                     </div>
                     {directMods.map((mod) => (
-                      <ModRow key={mod.identifier} identifier={mod.identifier} version={mod.version} size={mod.download_size} />
+                      <ModRow key={mod.identifier} identifier={mod.identifier} version={mod.version} kspVersion={mod.ksp_version} size={mod.download_size} />
                     ))}
                   </>
                 )}
@@ -118,7 +118,7 @@ export function InstallDialog({ resolution, onConfirm, onCancel }: InstallDialog
                       </span>
                     </div>
                     {depMods.map((mod) => (
-                      <ModRow key={mod.identifier} identifier={mod.identifier} version={mod.version} size={mod.download_size} />
+                      <ModRow key={mod.identifier} identifier={mod.identifier} version={mod.version} kspVersion={mod.ksp_version} size={mod.download_size} />
                     ))}
                   </>
                 )}
@@ -175,10 +175,12 @@ export function InstallDialog({ resolution, onConfirm, onCancel }: InstallDialog
 function ModRow({
   identifier,
   version,
+  kspVersion,
   size,
 }: {
   identifier: string
   version: string
+  kspVersion: string | null
   size: number | null
 }) {
   return (
@@ -190,6 +192,11 @@ function ModRow({
         <span className="text-xs text-[rgba(99,102,241,0.7)] bg-[rgba(99,102,241,0.1)] px-1.5 py-0.5 rounded flex-shrink-0">
           v{version}
         </span>
+        {kspVersion && (
+          <span className="text-xs text-[rgba(148,163,184,0.5)] flex-shrink-0">
+            KSP {kspVersion}
+          </span>
+        )}
       </div>
       {size != null && (
         <span className="text-xs text-[rgba(100,116,139,0.7)] flex-shrink-0 ml-3">

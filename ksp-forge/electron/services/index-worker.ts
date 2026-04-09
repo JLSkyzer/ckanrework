@@ -40,15 +40,16 @@ db.pragma('foreign_keys = OFF') // Faster for bulk insert
 const upsertMod = db.prepare(`
   INSERT INTO mods (identifier, name, abstract, author, license, latest_version,
     ksp_version, ksp_version_min, ksp_version_max, download_url, download_size,
-    spacedock_id, tags, resources, updated_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    spacedock_id, tags, resources, release_date, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   ON CONFLICT(identifier) DO UPDATE SET
     name=excluded.name, abstract=excluded.abstract, author=excluded.author,
     license=excluded.license, latest_version=excluded.latest_version,
     ksp_version=excluded.ksp_version, ksp_version_min=excluded.ksp_version_min,
     ksp_version_max=excluded.ksp_version_max, download_url=excluded.download_url,
     download_size=excluded.download_size, spacedock_id=excluded.spacedock_id,
-    tags=excluded.tags, resources=excluded.resources, updated_at=excluded.updated_at
+    tags=excluded.tags, resources=excluded.resources, release_date=excluded.release_date,
+    updated_at=excluded.updated_at
 `)
 
 const upsertVersion = db.prepare(`
@@ -96,6 +97,7 @@ try {
               c.download ?? null, c.download_size ?? null, sdId,
               c.tags ? JSON.stringify(c.tags) : null,
               c.resources ? JSON.stringify(c.resources) : null,
+              (c as any).release_date ?? null,
               now
             )
 

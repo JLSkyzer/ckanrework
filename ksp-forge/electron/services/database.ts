@@ -42,6 +42,7 @@ export class DatabaseService {
         spacedock_id    INTEGER,
         tags            TEXT,
         resources       TEXT,
+        release_date    TEXT,
         updated_at      INTEGER NOT NULL
       );
 
@@ -133,11 +134,11 @@ export class DatabaseService {
         `INSERT INTO mods (
           identifier, name, abstract, author, license, latest_version,
           ksp_version, ksp_version_min, ksp_version_max,
-          download_url, download_size, spacedock_id, tags, resources, updated_at
+          download_url, download_size, spacedock_id, tags, resources, release_date, updated_at
         ) VALUES (
           @identifier, @name, @abstract, @author, @license, @latest_version,
           @ksp_version, @ksp_version_min, @ksp_version_max,
-          @download_url, @download_size, @spacedock_id, @tags, @resources, @updated_at
+          @download_url, @download_size, @spacedock_id, @tags, @resources, @release_date, @updated_at
         )
         ON CONFLICT(identifier) DO UPDATE SET
           name            = excluded.name,
@@ -153,6 +154,7 @@ export class DatabaseService {
           spacedock_id    = excluded.spacedock_id,
           tags            = excluded.tags,
           resources       = excluded.resources,
+          release_date    = excluded.release_date,
           updated_at      = excluded.updated_at`
       )
       .run(mod)

@@ -390,6 +390,9 @@ export function ModDetail() {
                 <MetaRow label="Downloads" value={formatDownloads(downloads)} />
               )}
               <MetaRow label="Author" value={authorList} />
+              {mod.release_date && (
+                <MetaRow label="Updated" value={new Date(mod.release_date).toLocaleDateString()} />
+              )}
             </div>
 
             {/* Links */}

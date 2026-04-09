@@ -4,6 +4,7 @@ import type { DatabaseService } from './database'
 export interface ResolvedMod {
   identifier: string
   version: string
+  ksp_version: string | null
   download_url: string
   download_size: number | null
   download_hash: string | null
@@ -81,7 +82,9 @@ export class ResolverService {
     }
 
     toInstall.set(identifier, {
-      identifier, version: selected.version, download_url: selected.download_url,
+      identifier, version: selected.version,
+      ksp_version: selected.ksp_version ?? selected.ksp_version_min ?? selected.ksp_version_max ?? null,
+      download_url: selected.download_url,
       download_size: selected.download_size, download_hash: selected.download_hash,
       install_directives: selected.install_directives, isDependency
     })
