@@ -7,6 +7,8 @@ import { useUiStore } from '../../stores/ui-store'
 import { useProfileStore } from '../../stores/profile-store'
 import { formatDownloads, formatDate } from '../../lib/format'
 import { ModDependencies } from './ModDependencies'
+import { useInstall } from '../../hooks/use-install'
+import { InstallDialog } from '../install/InstallDialog'
 
 type Tab = 'description' | 'changelog' | 'dependencies'
 
@@ -28,7 +30,8 @@ function renderDescription(sdData: SpaceDockCacheRow | null, mod: { abstract: st
 export function ModDetail() {
   const { selectedModId, goBack } = useUiStore()
   const { mods, fetchSpaceDockData, fetchModVersions } = useModStore()
-  const { installedMods, activeProfileId } = useProfileStore()
+  const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
+  const { resolution, showDialog, installing, progress, requestInstall, confirmInstall, cancelInstall } = useInstall()
 
   const [sdData, setSdData] = useState<SpaceDockCacheRow | null>(null)
   const [versions, setVersions] = useState<ModVersionRow[]>([])
@@ -116,6 +119,15 @@ export function ModDetail() {
           <span>Back to mods</span>
         </button>
       </div>
+
+      {/* Install Dialog */}
+      {showDialog && resolution && (
+        <InstallDialog
+          resolution={resolution}
+          onConfirm={confirmInstall}
+          onCancel={cancelInstall}
+        />
+      )}
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
@@ -238,34 +250,40 @@ export function ModDetail() {
             <div>
               {isInstalled ? (
                 <button
-                  disabled
+                  onClick={async () => {
+                    if (!activeProfileId) return
+                    await window.electronAPI?.uninstallMod?.(mod.identifier, activeProfileId)
+                    await fetchInstalledMods(activeProfileId)
+                  }}
                   className="
                     w-full py-2.5 rounded-lg text-sm font-semibold
-                    bg-[rgba(99,102,241,0.08)] text-[rgba(99,102,241,0.6)]
-                    border border-[rgba(99,102,241,0.2)]
-                    cursor-not-allowed
+                    bg-[rgba(239,68,68,0.12)] text-[rgba(252,165,165,0.9)]
+                    border border-[rgba(239,68,68,0.25)]
+                    hover:bg-[rgba(239,68,68,0.2)] transition-colors cursor-pointer
                   "
                 >
-                  ✓ Installed ({installedVersion})
+                  ✓ Installed ({installedVersion}) — Uninstall
                 </button>
               ) : (
                 <button
-                  disabled
-                  className="
+                  disabled={installing || !activeProfileId}
+                  onClick={() => requestInstall([mod.identifier])}
+                  className={`
                     w-full py-2.5 rounded-lg text-sm font-semibold
-                    bg-[rgba(99,102,241,0.8)] text-white
-                    border border-[rgba(99,102,241,0.4)]
-                    hover:bg-[rgba(99,102,241,1)] transition-colors
-                    cursor-not-allowed opacity-60
-                  "
-                  title="Install dialog coming soon"
+                    border transition-colors
+                    ${installing
+                      ? 'bg-[rgba(99,102,241,0.3)] text-[rgba(148,163,184,0.6)] border-[rgba(99,102,241,0.2)] cursor-not-allowed'
+                      : 'bg-[rgba(99,102,241,0.8)] text-white border-[rgba(99,102,241,0.4)] hover:bg-[rgba(99,102,241,1)] cursor-pointer'
+                    }
+                  `}
                 >
-                  Install
+                  {installing && progress.currentName === mod.identifier
+                    ? `Installing... ${progress.current}/${progress.total}`
+                    : installing
+                    ? 'Installing...'
+                    : 'Install'}
                 </button>
               )}
-              <p className="text-[10px] text-[rgba(100,116,139,0.6)] text-center mt-1">
-                Install dialog coming soon
-              </p>
             </div>
 
             {/* Metadata */}
