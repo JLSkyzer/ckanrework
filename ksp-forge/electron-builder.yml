@@ -1,0 +1,19 @@
+appId: com.kspforge.app
+productName: KSP Forge
+directories:
+  output: release
+files:
+  - dist/**/*
+  - electron/**/*
+win:
+  target: nsis
+  icon: build/icon.ico
+mac:
+  target: dmg
+  icon: build/icon.icns
+linux:
+  target: AppImage
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
