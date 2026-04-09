@@ -2,18 +2,39 @@ appId: com.kspforge.app
 productName: KSP Forge
 directories:
   output: release
+  buildResources: build
 files:
-  - dist/**/*
-  - electron/**/*
+  - out/**/*
+  - "!node_modules/**/*"
+asarUnpack:
+  - "**/*.node"
 win:
-  target: nsis
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
   icon: build/icon.ico
 mac:
-  target: dmg
+  target:
+    - target: dmg
+      arch: [x64, arm64]
   icon: build/icon.icns
+  category: public.app-category.utilities
 linux:
-  target: AppImage
+  target:
+    - target: AppImage
+      arch: [x64]
+    - target: deb
+      arch: [x64]
   icon: build/icon.png
+  category: Game
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+publish:
+  provider: github
+  owner: JLSkyzer
+  repo: ckanrework
