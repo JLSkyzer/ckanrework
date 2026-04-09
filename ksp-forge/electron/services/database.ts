@@ -9,9 +9,18 @@ import type {
 
 export class DatabaseService {
   private db: Database.Database
+  readonly dbPath: string
 
   constructor(dbPath: string) {
+    this.dbPath = dbPath
     this.db = new Database(dbPath)
+    this.db.pragma('journal_mode = WAL')
+    this.db.pragma('foreign_keys = ON')
+  }
+
+  reopen(): void {
+    try { this.db.close() } catch { /* already closed */ }
+    this.db = new Database(this.dbPath)
     this.db.pragma('journal_mode = WAL')
     this.db.pragma('foreign_keys = ON')
   }

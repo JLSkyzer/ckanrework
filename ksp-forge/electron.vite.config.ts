@@ -8,13 +8,15 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
     build: {
       lib: {
-        entry: resolve(__dirname, 'electron/main.ts'),
-        fileName: () => 'index.js',
+        entry: {
+          index: resolve(__dirname, 'electron/main.ts'),
+          'index-worker': resolve(__dirname, 'electron/services/index-worker.ts'),
+        },
         formats: ['cjs'],
       },
       rollupOptions: {
         output: {
-          entryFileNames: 'index.js',
+          entryFileNames: '[name].js',
         },
       },
     },

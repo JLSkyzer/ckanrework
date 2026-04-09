@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { useModStore } from '../../stores/mod-store'
 import { useProfileStore } from '../../stores/profile-store'
 import { useUiStore } from '../../stores/ui-store'
@@ -9,10 +10,15 @@ interface ModGridProps {
   filter?: 'all' | 'installed'
 }
 
+const CARD_MIN_WIDTH = 240
+const CARD_HEIGHT = 230
+const GAP = 16
+
 export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { mods, loading } = useModStore()
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
   const { currentView } = useUiStore()
+  const parentRef = useRef<HTMLDivElement>(null)
 
   const isInstalledView = currentView === 'installed' || filter === 'installed'
 
@@ -22,11 +28,27 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
     }
   }, [activeProfileId])
 
-  const installedSet = new Set(installedMods.map((m) => m.identifier))
+  const installedSet = useMemo(
+    () => new Set(installedMods.map((m) => m.identifier)),
+    [installedMods]
+  )
 
-  const displayedMods = isInstalledView
-    ? mods.filter((m) => installedSet.has(m.identifier))
-    : mods
+  const displayedMods = useMemo(
+    () => isInstalledView ? mods.filter((m) => installedSet.has(m.identifier)) : mods,
+    [mods, isInstalledView, installedSet]
+  )
+
+  // Calculate columns based on container width
+  const containerWidth = parentRef.current?.clientWidth ?? 900
+  const columns = Math.max(1, Math.floor((containerWidth + GAP) / (CARD_MIN_WIDTH + GAP)))
+  const rowCount = Math.ceil(displayedMods.length / columns)
+
+  const virtualizer = useVirtualizer({
+    count: rowCount,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => CARD_HEIGHT + GAP,
+    overscan: 3,
+  })
 
   const title = isInstalledView ? 'Installed Mods' : 'Discover Mods'
 
@@ -34,9 +56,9 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
     <div className="flex flex-col h-full">
       <SearchBar />
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div ref={parentRef} className="flex-1 overflow-y-auto px-6 pb-6">
         {/* Header */}
-        <div className="mb-5 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between sticky top-0 bg-[#0d0d1a] pt-4 pb-2 z-10">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
           {!loading && (
             <span className="text-sm text-[rgba(148,163,184,0.6)]">
@@ -45,27 +67,17 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
           )}
         </div>
 
-        {/* Loading state */}
         {loading && (
           <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="text-4xl mb-4">🚀</div>
-              <p className="text-[rgba(99,102,241,0.9)] font-medium animate-pulse">
-                Syncing mods...
-              </p>
-            </div>
+            <p className="text-[rgba(99,102,241,0.9)] font-medium animate-pulse">Loading mods...</p>
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && displayedMods.length === 0 && (
           <div className="flex items-center justify-center py-20">
             <div className="text-center">
-              <div className="text-4xl mb-4">{isInstalledView ? '📦' : '🔭'}</div>
               <p className="text-[rgba(148,163,184,0.7)] text-lg font-medium">
-                {isInstalledView
-                  ? 'No mods installed yet'
-                  : 'No mods found'}
+                {isInstalledView ? 'No mods installed yet' : 'No mods found'}
               </p>
               <p className="text-[rgba(100,116,139,0.7)] text-sm mt-1">
                 {isInstalledView
@@ -76,19 +88,43 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
           </div>
         )}
 
-        {/* Mod grid */}
         {!loading && displayedMods.length > 0 && (
           <div
-            className="grid gap-4"
-            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+            style={{
+              height: virtualizer.getTotalSize(),
+              width: '100%',
+              position: 'relative',
+            }}
           >
-            {displayedMods.map((mod) => (
-              <ModCard
-                key={mod.identifier}
-                mod={mod}
-                isInstalled={installedSet.has(mod.identifier)}
-              />
-            ))}
+            {virtualizer.getVirtualItems().map((virtualRow) => {
+              const startIndex = virtualRow.index * columns
+              const rowMods = displayedMods.slice(startIndex, startIndex + columns)
+
+              return (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: CARD_HEIGHT,
+                    transform: `translateY(${virtualRow.start}px)`,
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+                    gap: `${GAP}px`,
+                  }}
+                >
+                  {rowMods.map((mod) => (
+                    <ModCard
+                      key={mod.identifier}
+                      mod={mod}
+                      isInstalled={installedSet.has(mod.identifier)}
+                    />
+                  ))}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

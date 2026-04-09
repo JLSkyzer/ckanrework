@@ -57,7 +57,7 @@ app.whenReady().then(() => {
   const db = new DatabaseService(dbPath)
   db.init()
 
-  const metaSync = new MetaSyncService(repoPath, db)
+  const metaSync = new MetaSyncService(repoPath, db, dbPath)
   const spaceDock = new SpaceDockService(db)
   const resolver = new ResolverService(db)
   const installer = new InstallerService(db)
