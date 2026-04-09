@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import type { DatabaseService } from './services/database'
 import type { MetaSyncService } from './services/meta-sync'
 import type { SpaceDockService } from './services/spacedock'
@@ -113,10 +113,11 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   // --- Dialog ---
-  ipcMain.handle('dialog:selectFolder', async (_event) => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openDirectory'],
-    })
+  ipcMain.handle('dialog:selectFolder', async () => {
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+      : await dialog.showOpenDialog({ properties: ['openDirectory'] })
     if (result.canceled || result.filePaths.length === 0) return null
     return result.filePaths[0]
   })

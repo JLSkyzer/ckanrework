@@ -9,6 +9,13 @@ export default defineConfig({
     build: {
       lib: {
         entry: resolve(__dirname, 'electron/main.ts'),
+        fileName: () => 'index.js',
+        formats: ['cjs'],
+      },
+      rollupOptions: {
+        output: {
+          entryFileNames: 'index.js',
+        },
       },
     },
   },
@@ -17,6 +24,13 @@ export default defineConfig({
     build: {
       lib: {
         entry: resolve(__dirname, 'electron/preload.ts'),
+        fileName: () => 'index.js',
+        formats: ['cjs'],
+      },
+      rollupOptions: {
+        output: {
+          entryFileNames: 'index.js',
+        },
       },
     },
   },
