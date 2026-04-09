@@ -9,9 +9,9 @@
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build:win": "electron-vite build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:win": "electron-vite build && electron-builder --win --publish never",
+    "build:mac": "electron-vite build && electron-builder --mac --publish never",
+    "build:linux": "electron-vite build && electron-builder --linux --publish never"
   },
   "keywords": [
     "ksp",
