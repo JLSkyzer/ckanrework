@@ -104,10 +104,8 @@ export class MetaSyncService {
     }
 
     // Phase 2: Index in a worker thread (doesn't block main process)
+    // Worker opens its own DB connection — WAL mode supports concurrent readers/writers
     onProgress?.(0, 1, 'indexing')
-
-    // Close DB connection before worker uses it
-    this.db.close()
 
     const count = await new Promise<number>((resolve, reject) => {
       const workerPath = path.join(__dirname, 'index-worker.js')
@@ -127,9 +125,6 @@ export class MetaSyncService {
 
       worker.on('error', reject)
     })
-
-    // Reopen DB connection
-    this.db.reopen()
 
     return count
   }
