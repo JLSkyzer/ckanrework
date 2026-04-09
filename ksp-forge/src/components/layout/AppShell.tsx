@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
+import { DownloadProgress } from '../install/DownloadProgress'
+import { useInstallStore } from '../../stores/install-store'
 import { useUiStore } from '../../stores/ui-store'
 import { useModStore } from '../../stores/mod-store'
 import { useProfileStore } from '../../stores/profile-store'
@@ -11,6 +13,7 @@ import { SettingsView } from '../settings/SettingsView'
 export function AppShell() {
   const { currentView } = useUiStore()
   const { syncIfNeeded, syncing, syncStatus, syncProgress, modCount } = useModStore()
+  const installProgress = useInstallStore(s => s.progress)
   const { fetchProfiles, activeProfileId, fetchInstalledMods } = useProfileStore()
 
   useEffect(() => {
@@ -85,6 +88,7 @@ export function AppShell() {
           )}
         </main>
       </div>
+      <DownloadProgress progress={installProgress} />
     </div>
   )
 }

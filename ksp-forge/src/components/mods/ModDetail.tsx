@@ -7,7 +7,7 @@ import { useUiStore } from '../../stores/ui-store'
 import { useProfileStore } from '../../stores/profile-store'
 import { formatDownloads, formatDate } from '../../lib/format'
 import { ModDependencies } from './ModDependencies'
-import { useInstall } from '../../hooks/use-install'
+import { useInstallStore } from '../../stores/install-store'
 import { InstallDialog } from '../install/InstallDialog'
 
 type Tab = 'description' | 'screenshots' | 'changelog' | 'dependencies'
@@ -53,7 +53,7 @@ export function ModDetail() {
   const { selectedModId, goBack } = useUiStore()
   const { mods, fetchSpaceDockData, fetchModVersions } = useModStore()
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
-  const { resolution, showDialog, installing, progress, requestInstall, confirmInstall, cancelInstall } = useInstall()
+  const { resolution, showDialog, installing, progress, requestInstall, confirmInstall, cancelInstall } = useInstallStore()
 
   const [sdData, setSdData] = useState<SpaceDockCacheRow | null>(null)
   const [versions, setVersions] = useState<ModVersionRow[]>([])

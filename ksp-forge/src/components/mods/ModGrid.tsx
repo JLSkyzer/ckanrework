@@ -6,8 +6,7 @@ import { useUiStore } from '../../stores/ui-store'
 import { SearchBar } from '../layout/SearchBar'
 import { ModCard } from './ModCard'
 import { InstallDialog } from '../install/InstallDialog'
-import { DownloadProgress } from '../install/DownloadProgress'
-import { useInstall } from '../../hooks/use-install'
+import { useInstallStore } from '../../stores/install-store'
 
 interface ModGridProps {
   filter?: 'all' | 'installed'
@@ -36,7 +35,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
   const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
   const { getActiveProfile } = useProfileStore()
-  const { resolution, showDialog, installing, progress, confirmInstall, cancelInstall, requestInstall } = useInstall()
+  const { resolution, showDialog, installing, progress, confirmInstall, cancelInstall, requestInstall } = useInstallStore()
   const parentRef = useRef<HTMLDivElement>(null)
 
   const handleCardInstall = useCallback((identifier: string) => {
@@ -220,8 +219,6 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
       {showDialog && resolution && (
         <InstallDialog resolution={resolution} installing={installing} onConfirm={confirmInstall} onCancel={cancelInstall} />
       )}
-
-      <DownloadProgress progress={progress} />
     </div>
   )
 }
