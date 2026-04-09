@@ -1,0 +1,55 @@
+{
+  "name": "ksp-forge",
+  "version": "0.1.0",
+  "description": "KSP mod manager built with Electron + React",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "ksp",
+    "mods",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/utils": "^3.0.0",
+    "@tailwindcss/vite": "^4.1.4",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/dompurify": "^3.2.0",
+    "@types/node": "^22.13.10",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.2",
+    "@types/semver": "^7.5.8",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^35.2.1",
+    "electron-vite": "^3.1.0",
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.1",
+    "vitest": "^3.1.1"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.9.1",
+    "dompurify": "^3.2.5",
+    "marked": "^15.0.12",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "semver": "^7.7.1",
+    "simple-git": "^3.27.0",
+    "zustand": "^5.0.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "electron",
+      "esbuild"
+    ]
+  }
+}
