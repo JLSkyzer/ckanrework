@@ -77,11 +77,29 @@ export class MetaSyncService {
     // Phase 1: Git clone or pull
     onProgress?.(0, 1, 'downloading')
 
-    if (!fs.existsSync(path.join(this.repoPath, '.git'))) {
+    const gitDir = path.join(this.repoPath, '.git')
+    const lockFile = path.join(gitDir, 'index.lock')
+
+    // Clean up stale lock file from previous crash
+    if (fs.existsSync(lockFile)) {
+      fs.unlinkSync(lockFile)
+    }
+
+    if (!fs.existsSync(gitDir)) {
+      // No .git = either first time or corrupted. Clean and clone.
+      if (fs.existsSync(this.repoPath)) {
+        fs.rmSync(this.repoPath, { recursive: true, force: true })
+      }
       await git.clone(CKAN_META_REPO, this.repoPath, ['--depth', '1'])
     } else {
-      git.cwd(this.repoPath)
-      await git.pull()
+      try {
+        git.cwd(this.repoPath)
+        await git.pull()
+      } catch {
+        // Corrupted repo — nuke and re-clone
+        fs.rmSync(this.repoPath, { recursive: true, force: true })
+        await git.clone(CKAN_META_REPO, this.repoPath, ['--depth', '1'])
+      }
     }
 
     // Phase 2: Index in a worker thread (doesn't block main process)
