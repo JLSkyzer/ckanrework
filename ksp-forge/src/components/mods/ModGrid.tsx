@@ -35,8 +35,12 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
   const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
   const { getActiveProfile } = useProfileStore()
-  const { resolution, showDialog, installing, confirmInstall, cancelInstall } = useInstall()
+  const { resolution, showDialog, installing, confirmInstall, cancelInstall, requestInstall } = useInstall()
   const parentRef = useRef<HTMLDivElement>(null)
+
+  const handleCardInstall = useCallback((identifier: string) => {
+    requestInstall([identifier])
+  }, [requestInstall])
 
   const isInstalledView = currentView === 'installed' || filter === 'installed'
 
@@ -50,7 +54,9 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
   )
 
   const displayedMods = useMemo(() => {
-    let result = isInstalledView ? mods.filter((m) => installedSet.has(m.identifier)) : mods
+    let result = isInstalledView
+      ? mods.filter((m) => installedSet.has(m.identifier))
+      : mods.filter((m) => !installedSet.has(m.identifier)) // hide installed from Discover
 
     // KSP version range filter
     if (filterKspVersionMin) {
@@ -180,7 +186,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
                   }}
                 >
                   {rowMods.map((mod) => (
-                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} />
+                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} onInstall={handleCardInstall} />
                   ))}
                 </div>
               )

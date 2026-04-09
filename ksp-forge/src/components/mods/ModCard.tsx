@@ -1,29 +1,25 @@
 import { memo, useCallback } from 'react'
-import type { ModRow, SpaceDockCacheRow } from '../../../electron/types'
+import type { ModRow } from '../../../electron/types'
 import { useModStore } from '../../stores/mod-store'
 import { useUiStore } from '../../stores/ui-store'
-import { useInstall } from '../../hooks/use-install'
 import { formatDownloads } from '../../lib/format'
 
 interface ModCardProps {
   mod: ModRow
   isInstalled: boolean
+  onInstall: (identifier: string) => void
 }
 
-export const ModCard = memo(function ModCard({ mod, isInstalled }: ModCardProps) {
+export const ModCard = memo(function ModCard({ mod, isInstalled, onInstall }: ModCardProps) {
   const { openModDetail } = useUiStore()
   const { spacedockCache } = useModStore()
-  const { requestInstall } = useInstall()
 
-  // Read from cache (batch fetched by ModGrid)
   const sdData = spacedockCache.get(mod.identifier) ?? null
 
   const handleInstall = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!isInstalled) {
-      requestInstall([mod.identifier])
-    }
-  }, [mod.identifier, isInstalled, requestInstall])
+    onInstall(mod.identifier)
+  }, [mod.identifier, onInstall])
 
   const bannerUrl = sdData?.background_url ?? null
   const downloads = sdData?.downloads ?? null
@@ -60,14 +56,12 @@ export const ModCard = memo(function ModCard({ mod, isInstalled }: ModCardProps)
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[rgba(13,13,26,0.8)] to-transparent" />
 
-        {/* Badges */}
         {isInstalled && (
           <div className="absolute top-2 right-2 bg-[rgba(34,197,94,0.9)] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
             Installed
           </div>
         )}
 
-        {/* Quick install button */}
         {!isInstalled && (
           <button
             onClick={handleInstall}
