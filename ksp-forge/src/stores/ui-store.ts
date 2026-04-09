@@ -8,13 +8,18 @@ interface UiState {
   selectedModId: string | null
   searchQuery: string
   sortBy: 'name' | 'downloads' | 'updated'
-  filterKspVersion: string | null
+  filterKspVersionMin: string
+  filterKspVersionMax: string
+  filterCompatibleOnly: boolean
 
   setView: (view: ViewName) => void
   setSelectedMod: (id: string | null) => void
   setSearchQuery: (query: string) => void
   setSortBy: (sort: 'name' | 'downloads' | 'updated') => void
-  setFilterKspVersion: (version: string | null) => void
+  setFilterKspVersionMin: (v: string) => void
+  setFilterKspVersionMax: (v: string) => void
+  setFilterCompatibleOnly: (v: boolean) => void
+  resetFilters: () => void
   openModDetail: (id: string) => void
   goBack: () => void
 }
@@ -25,7 +30,9 @@ export const useUiStore = create<UiState>((set, get) => ({
   selectedModId: null,
   searchQuery: '',
   sortBy: 'downloads',
-  filterKspVersion: null,
+  filterKspVersionMin: '',
+  filterKspVersionMax: '',
+  filterCompatibleOnly: false,
 
   setView: (view) =>
     set((state) => ({
@@ -39,7 +46,10 @@ export const useUiStore = create<UiState>((set, get) => ({
 
   setSortBy: (sort) => set({ sortBy: sort }),
 
-  setFilterKspVersion: (version) => set({ filterKspVersion: version }),
+  setFilterKspVersionMin: (v) => set({ filterKspVersionMin: v }),
+  setFilterKspVersionMax: (v) => set({ filterKspVersionMax: v }),
+  setFilterCompatibleOnly: (v) => set({ filterCompatibleOnly: v }),
+  resetFilters: () => set({ searchQuery: '', sortBy: 'downloads', filterKspVersionMin: '', filterKspVersionMax: '', filterCompatibleOnly: false }),
 
   openModDetail: (id) =>
     set((state) => ({

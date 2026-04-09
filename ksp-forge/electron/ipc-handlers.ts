@@ -115,6 +115,24 @@ export function registerIpcHandlers(services: Services): void {
     return { count }
   })
 
+  ipcMain.handle('meta:resetAll', () => {
+    // Delete all data from DB
+    db.close()
+    const fs = require('fs')
+    const path = require('path')
+    const userData = require('electron').app.getPath('userData')
+    const dbFile = path.join(userData, 'ksp-forge.db')
+    const metaDir = path.join(userData, 'ckan-meta')
+    try { fs.unlinkSync(dbFile) } catch {}
+    try { fs.unlinkSync(dbFile + '-shm') } catch {}
+    try { fs.unlinkSync(dbFile + '-wal') } catch {}
+    try { fs.rmSync(metaDir, { recursive: true, force: true }) } catch {}
+    // Reopen fresh DB
+    db.reopen()
+    db.init()
+    return { success: true }
+  })
+
   ipcMain.handle('meta:getLastSync', () => {
     // Return null for now — could be persisted in DB later
     return null

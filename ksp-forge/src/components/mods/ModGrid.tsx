@@ -5,27 +5,43 @@ import { useProfileStore } from '../../stores/profile-store'
 import { useUiStore } from '../../stores/ui-store'
 import { SearchBar } from '../layout/SearchBar'
 import { ModCard } from './ModCard'
+import { InstallDialog } from '../install/InstallDialog'
+import { useInstall } from '../../hooks/use-install'
 
 interface ModGridProps {
   filter?: 'all' | 'installed'
 }
 
-const CARD_MIN_WIDTH = 240
-const CARD_HEIGHT = 230
+const CARD_HEIGHT = 220
 const GAP = 16
+
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] ?? 0
+    const vb = pb[i] ?? 0
+    if (va !== vb) return va - vb
+  }
+  return 0
+}
+
+function getModKspVersion(mod: { ksp_version: string | null; ksp_version_min: string | null; ksp_version_max: string | null }): string {
+  return mod.ksp_version || mod.ksp_version_min || mod.ksp_version_max || ''
+}
 
 export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { mods, loading } = useModStore()
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
-  const { currentView } = useUiStore()
+  const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
+  const { getActiveProfile } = useProfileStore()
+  const { resolution, showDialog, installing, confirmInstall, cancelInstall } = useInstall()
   const parentRef = useRef<HTMLDivElement>(null)
 
   const isInstalledView = currentView === 'installed' || filter === 'installed'
 
   useEffect(() => {
-    if (activeProfileId) {
-      fetchInstalledMods(activeProfileId)
-    }
+    if (activeProfileId) fetchInstalledMods(activeProfileId)
   }, [activeProfileId])
 
   const installedSet = useMemo(
@@ -33,14 +49,51 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
     [installedMods]
   )
 
-  const displayedMods = useMemo(
-    () => isInstalledView ? mods.filter((m) => installedSet.has(m.identifier)) : mods,
-    [mods, isInstalledView, installedSet]
-  )
+  const displayedMods = useMemo(() => {
+    let result = isInstalledView ? mods.filter((m) => installedSet.has(m.identifier)) : mods
 
-  // Calculate columns based on container width
+    // KSP version range filter
+    if (filterKspVersionMin) {
+      result = result.filter((m) => {
+        const v = getModKspVersion(m)
+        if (!v) return true // show mods with no version info
+        return compareVersions(v, filterKspVersionMin) >= 0
+      })
+    }
+    if (filterKspVersionMax) {
+      result = result.filter((m) => {
+        const v = getModKspVersion(m)
+        if (!v) return true
+        return compareVersions(v, filterKspVersionMax) <= 0
+      })
+    }
+
+    // Compatible with active profile
+    if (filterCompatibleOnly) {
+      const profile = getActiveProfile()
+      if (profile && profile.ksp_version !== 'unknown') {
+        const pv = profile.ksp_version
+        result = result.filter((m) => {
+          if (!m.ksp_version && !m.ksp_version_min && !m.ksp_version_max) return true
+          if (m.ksp_version === 'any') return true
+          if (m.ksp_version) {
+            // Match major.minor
+            const modParts = m.ksp_version.split('.')
+            const profParts = pv.split('.')
+            return modParts[0] === profParts[0] && modParts[1] === profParts[1]
+          }
+          if (m.ksp_version_min && compareVersions(pv, m.ksp_version_min) < 0) return false
+          if (m.ksp_version_max && compareVersions(pv, m.ksp_version_max) > 0) return false
+          return true
+        })
+      }
+    }
+
+    return result
+  }, [mods, isInstalledView, installedSet, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly])
+
   const containerWidth = parentRef.current?.clientWidth ?? 900
-  const columns = Math.max(1, Math.floor((containerWidth + GAP) / (CARD_MIN_WIDTH + GAP)))
+  const columns = Math.max(1, Math.floor((containerWidth + GAP) / (240 + GAP)))
   const rowCount = Math.ceil(displayedMods.length / columns)
 
   const virtualizer = useVirtualizer({
@@ -57,8 +110,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
       <SearchBar />
 
       <div ref={parentRef} className="flex-1 overflow-y-auto px-6 pb-6">
-        {/* Header */}
-        <div className="mb-5 flex items-center justify-between sticky top-0 bg-[#0d0d1a] pt-4 pb-2 z-10">
+        <div className="mb-4 flex items-center justify-between pt-4">
           <h2 className="text-2xl font-bold text-white">{title}</h2>
           {!loading && (
             <span className="text-sm text-[rgba(148,163,184,0.6)]">
@@ -74,32 +126,23 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
         )}
 
         {!loading && displayedMods.length === 0 && (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
+          <div className="flex items-center justify-center py-20 text-center">
+            <div>
               <p className="text-[rgba(148,163,184,0.7)] text-lg font-medium">
                 {isInstalledView ? 'No mods installed yet' : 'No mods found'}
               </p>
               <p className="text-[rgba(100,116,139,0.7)] text-sm mt-1">
-                {isInstalledView
-                  ? 'Browse the Discover tab to find and install mods'
-                  : 'Try adjusting your search query'}
+                {isInstalledView ? 'Browse the Discover tab to find and install mods' : 'Try adjusting your search or filters'}
               </p>
             </div>
           </div>
         )}
 
         {!loading && displayedMods.length > 0 && (
-          <div
-            style={{
-              height: virtualizer.getTotalSize(),
-              width: '100%',
-              position: 'relative',
-            }}
-          >
+          <div style={{ height: virtualizer.getTotalSize(), width: '100%', position: 'relative' }}>
             {virtualizer.getVirtualItems().map((virtualRow) => {
               const startIndex = virtualRow.index * columns
               const rowMods = displayedMods.slice(startIndex, startIndex + columns)
-
               return (
                 <div
                   key={virtualRow.key}
@@ -116,11 +159,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
                   }}
                 >
                   {rowMods.map((mod) => (
-                    <ModCard
-                      key={mod.identifier}
-                      mod={mod}
-                      isInstalled={installedSet.has(mod.identifier)}
-                    />
+                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} />
                   ))}
                 </div>
               )
@@ -128,6 +167,10 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
           </div>
         )}
       </div>
+
+      {showDialog && resolution && (
+        <InstallDialog resolution={resolution} installing={installing} onConfirm={confirmInstall} onCancel={cancelInstall} />
+      )}
     </div>
   )
 }

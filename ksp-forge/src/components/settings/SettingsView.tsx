@@ -102,6 +102,37 @@ export function SettingsView() {
           </div>
         </section>
 
+        {/* Danger Zone */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(239,68,68,0.2)]">
+            <span className="text-base">⚠</span>
+            <h3 className="text-base font-semibold text-[#ef4444]">Danger Zone</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(239,68,68,0.05)] border border-[rgba(239,68,68,0.15)] p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white font-medium">Reset all data</p>
+                <p className="text-xs text-[rgba(148,163,184,0.6)] mt-0.5">
+                  Deletes all profiles, cached data, and mod index. You will need to set up again from scratch.
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  if (!confirm('Are you sure? This will delete all profiles and cached data. The app will restart.')) return
+                  try {
+                    await api.meta.resetAll()
+                  } catch { /* ignore */ }
+                  window.location.reload()
+                }}
+                className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-[rgba(239,68,68,0.15)] hover:bg-[rgba(239,68,68,0.3)] text-[#ef4444] border border-[rgba(239,68,68,0.2)] transition-colors cursor-pointer"
+              >
+                Reset Everything
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* About section */}
         <section className="flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">

@@ -35,6 +35,7 @@ const api = {
   meta: {
     sync: () => ipcRenderer.invoke('meta:sync'),
     getLastSync: () => ipcRenderer.invoke('meta:getLastSync'),
+    resetAll: () => ipcRenderer.invoke('meta:resetAll'),
     onSyncProgress: (callback: (data: { current: number; total: number; phase: string }) => void) => {
       const handler = (_event: any, data: { current: number; total: number; phase: string }) => callback(data)
       ipcRenderer.on('meta:sync-progress', handler)
