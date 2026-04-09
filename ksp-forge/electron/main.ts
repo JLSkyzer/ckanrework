@@ -1,6 +1,7 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { initLogger } from './services/logger'
 import { DatabaseService } from './services/database'
 import { MetaSyncService } from './services/meta-sync'
 import { SpaceDockService } from './services/spacedock'
@@ -10,6 +11,31 @@ import { ProfileService } from './services/profile'
 import { ImageScraperService } from './services/image-scraper'
 import { ModCacheService } from './services/mod-cache'
 import { registerIpcHandlers } from './ipc-handlers'
+
+const logger = initLogger(join(app.getPath('userData'), 'logs'))
+logger.interceptConsole()
+
+logger.info('KSP Forge starting')
+logger.info(`Version: ${app.getVersion()}, Platform: ${process.platform}, Arch: ${process.arch}, Electron: ${process.versions.electron}, Node: ${process.versions.node}`)
+
+process.on('uncaughtException', (error) => {
+  logger.error('UNCAUGHT EXCEPTION: ' + (error.stack || error.message))
+  const response = dialog.showMessageBoxSync({
+    type: 'error',
+    title: 'KSP Forge - Crash',
+    message: 'KSP Forge has crashed unexpectedly.',
+    detail: `Error: ${error.message}\n\nLogs have been saved to:\n${logger.getLogPath()}`,
+    buttons: ['Open Logs Folder', 'Close']
+  })
+  if (response === 0) {
+    shell.openPath(logger.getLogsDir())
+  }
+  app.exit(1)
+})
+
+process.on('unhandledRejection', (reason) => {
+  logger.error('UNHANDLED REJECTION: ' + String(reason))
+})
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -56,9 +82,11 @@ app.whenReady().then(() => {
   const dbPath = join(userData, 'ksp-forge.db')
   const repoPath = join(userData, 'ckan-meta')
 
+  logger.info('Initializing database...')
   const db = new DatabaseService(dbPath)
   db.init()
 
+  logger.info('Initializing services...')
   const metaSync = new MetaSyncService(repoPath, db, dbPath)
   const imageCacheDir = join(userData, 'image-cache')
   const spaceDock = new SpaceDockService(db, imageCacheDir)
@@ -68,8 +96,10 @@ app.whenReady().then(() => {
   const imageScraper = new ImageScraperService(db)
   const modCache = new ModCacheService(join(userData, 'mod-cache'))
 
+  logger.info('Registering IPC handlers...')
   registerIpcHandlers({ db, metaSync, spaceDock, resolver, installer, profile, imageScraper, modCache })
 
+  logger.info('Creating main window...')
   createWindow()
 
   app.on('activate', function () {
@@ -78,6 +108,7 @@ app.whenReady().then(() => {
 })
 
 app.on('window-all-closed', () => {
+  logger.info('All windows closed, quitting')
   if (process.platform !== 'darwin') {
     app.quit()
   }

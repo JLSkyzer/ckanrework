@@ -66,6 +66,10 @@ const api = {
   dialog: {
     selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),
   },
+  logs: {
+    export: () => ipcRenderer.invoke('logs:export') as Promise<{ success: boolean; path?: string }>,
+    openFolder: () => ipcRenderer.invoke('logs:openFolder') as Promise<{ success: boolean }>,
+  },
 }
 
 export type ElectronAPI = typeof api

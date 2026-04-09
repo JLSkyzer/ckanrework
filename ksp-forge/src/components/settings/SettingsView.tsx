@@ -188,6 +188,39 @@ export function SettingsView() {
           </div>
         </section>
 
+        {/* Logs section */}
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-[rgba(99,102,241,0.12)]">
+            <span className="text-base">&#128196;</span>
+            <h3 className="text-base font-semibold text-white">Logs</h3>
+          </div>
+
+          <div className="rounded-xl bg-[rgba(255,255,255,0.03)] border border-[rgba(99,102,241,0.12)] p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm text-white font-medium">Application logs</p>
+                <p className="text-xs text-[rgba(148,163,184,0.6)] mt-0.5">
+                  Logs are kept for 7 days
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => api.logs.export()}
+                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-[rgba(99,102,241,0.15)] hover:bg-[rgba(99,102,241,0.3)] text-[rgba(199,210,254,0.9)] border border-[rgba(99,102,241,0.2)] transition-colors cursor-pointer"
+                >
+                  Export Logs
+                </button>
+                <button
+                  onClick={() => api.logs.openFolder()}
+                  className="flex-shrink-0 px-4 py-2 rounded-lg text-sm font-semibold bg-[rgba(99,102,241,0.15)] hover:bg-[rgba(99,102,241,0.3)] text-[rgba(199,210,254,0.9)] border border-[rgba(99,102,241,0.2)] transition-colors cursor-pointer"
+                >
+                  Open Logs Folder
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Danger Zone */}
         <section className="flex flex-col gap-4">
           <div className="flex items-center gap-2 pb-2 border-b border-[rgba(239,68,68,0.2)]">

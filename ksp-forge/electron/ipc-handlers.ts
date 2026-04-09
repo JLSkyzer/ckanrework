@@ -1,4 +1,4 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import fs from 'fs'
 import type { SpaceDockCacheRow } from './types'
 import type { ImageScraperService } from './services/image-scraper'
@@ -9,6 +9,7 @@ import type { ResolverService } from './services/resolver'
 import type { InstallerService } from './services/installer'
 import type { ProfileService } from './services/profile'
 import type { ModCacheService } from './services/mod-cache'
+import { getLogger } from './services/logger'
 import os from 'os'
 import path from 'path'
 
@@ -25,6 +26,7 @@ interface Services {
 
 export function registerIpcHandlers(services: Services): void {
   const { db, metaSync, spaceDock, resolver, installer, profile, imageScraper, modCache } = services
+  const log = getLogger()
 
   // --- Mods ---
   ipcMain.handle('mods:getAll', () => {
@@ -94,6 +96,7 @@ export function registerIpcHandlers(services: Services): void {
 
   // --- Installer ---
   ipcMain.handle('installer:install', async (_event, resolvedMod: any, kspPath: string, profileId: string) => {
+    log.info(`Installing mod: ${resolvedMod.identifier} v${resolvedMod.version} to profile ${profileId}`)
     const tempDir = path.join(os.tmpdir(), 'ksp-forge-install')
     const plan = installer.buildInstallPlan([resolvedMod])
     const item = plan[0]
@@ -115,8 +118,8 @@ export function registerIpcHandlers(services: Services): void {
 
       const win = BrowserWindow.getFocusedWindow()
       worker.on('message', (msg: any) => {
-        if (msg.type === 'done') resolve(msg.files)
-        else if (msg.type === 'error') reject(new Error(msg.message))
+        if (msg.type === 'done') { log.info(`Mod installed successfully: ${item.identifier}`); resolve(msg.files) }
+        else if (msg.type === 'error') { log.error(`Mod install failed: ${item.identifier} - ${msg.message}`); reject(new Error(msg.message)) }
         else if (msg.type === 'download-progress' || msg.type === 'status') {
           win?.webContents.send('installer:progress', { identifier: item.identifier, ...msg })
         }
@@ -144,7 +147,9 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   ipcMain.handle('installer:uninstall', async (_event, profileId: string, identifier: string, kspPath: string) => {
+    log.info(`Uninstalling mod: ${identifier} from profile ${profileId}`)
     await installer.uninstallMod(profileId, identifier, kspPath)
+    log.info(`Mod uninstalled: ${identifier}`)
     return { success: true }
   })
 
@@ -248,9 +253,12 @@ export function registerIpcHandlers(services: Services): void {
   })
 
   ipcMain.handle('profiles:switch', (_event, fromProfileId: string, toProfileId: string) => {
+    log.info(`Switching profile: ${fromProfileId} -> ${toProfileId}`)
     const fromProfile = db.getProfile(fromProfileId)
     if (!fromProfile) throw new Error(`Profile ${fromProfileId} not found`)
-    return profile.switchProfile(fromProfileId, toProfileId, fromProfile.ksp_path, modCache)
+    const result = profile.switchProfile(fromProfileId, toProfileId, fromProfile.ksp_path, modCache)
+    log.info(`Profile switch complete: ${fromProfileId} -> ${toProfileId}`)
+    return result
   })
 
   // --- Mod Cache ---
@@ -265,10 +273,12 @@ export function registerIpcHandlers(services: Services): void {
 
   // --- Meta ---
   ipcMain.handle('meta:sync', async () => {
+    log.info('Meta sync started')
     const win = BrowserWindow.getFocusedWindow()
     const count = await metaSync.sync((current, total, phase) => {
       win?.webContents.send('meta:sync-progress', { current, total, phase })
     })
+    log.info(`Meta sync complete: ${count} mods indexed`)
     return { count }
   })
 
@@ -303,5 +313,29 @@ export function registerIpcHandlers(services: Services): void {
       : await dialog.showOpenDialog({ properties: ['openDirectory'] })
     if (result.canceled || result.filePaths.length === 0) return null
     return result.filePaths[0]
+  })
+
+  // --- Logs ---
+  ipcMain.handle('logs:export', async () => {
+    const content = log.exportLogs()
+    const win = BrowserWindow.getFocusedWindow()
+    const result = win
+      ? await dialog.showSaveDialog(win, {
+          defaultPath: `ksp-forge-logs.txt`,
+          filters: [{ name: 'Text', extensions: ['txt'] }],
+        })
+      : await dialog.showSaveDialog({
+          defaultPath: `ksp-forge-logs.txt`,
+          filters: [{ name: 'Text', extensions: ['txt'] }],
+        })
+    if (result.canceled || !result.filePath) return { success: false }
+    fs.writeFileSync(result.filePath, content, 'utf-8')
+    log.info(`Logs exported to ${result.filePath}`)
+    return { success: true, path: result.filePath }
+  })
+
+  ipcMain.handle('logs:openFolder', () => {
+    shell.openPath(log.getLogsDir())
+    return { success: true }
   })
 }
