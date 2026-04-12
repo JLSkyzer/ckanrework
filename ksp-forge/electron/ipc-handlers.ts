@@ -316,7 +316,9 @@ export function registerIpcHandlers(services: Services): void {
       const data = await res.json()
       const latestTag = (data.tag_name || '').replace(/^v/, '')
       if (!latestTag) return null
-      if (latestTag !== currentVersion) {
+      // Compare with semver: only notify if latest is GREATER than current
+      const semver = require('semver')
+      if (semver.valid(latestTag) && semver.valid(currentVersion) && semver.gt(latestTag, currentVersion)) {
         return { currentVersion, latestVersion: latestTag, url: data.html_url }
       }
       return null
