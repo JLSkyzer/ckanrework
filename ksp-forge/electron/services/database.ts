@@ -7,6 +7,17 @@ import type {
   InstalledModRow,
 } from '../types'
 
+function compareVersionStrings(a: string, b: string): number {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] ?? 0
+    const vb = pb[i] ?? 0
+    if (va !== vb) return va - vb
+  }
+  return 0
+}
+
 export class DatabaseService {
   private db: Database.Database
   readonly dbPath: string
@@ -237,9 +248,11 @@ export class DatabaseService {
   }
 
   getModVersions(identifier: string): ModVersionRow[] {
-    return this.db
-      .prepare(`SELECT * FROM mod_versions WHERE identifier = @identifier ORDER BY version DESC`)
+    const rows = this.db
+      .prepare(`SELECT * FROM mod_versions WHERE identifier = @identifier`)
       .all({ identifier }) as ModVersionRow[]
+    // Sort by semver descending (string sort puts 0.1.9 above 0.1.18)
+    return rows.sort((a, b) => compareVersionStrings(b.version, a.version))
   }
 
   upsertSpaceDockCache(entry: SpaceDockCacheRow): void {

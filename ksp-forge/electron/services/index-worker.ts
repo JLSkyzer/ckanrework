@@ -31,6 +31,17 @@ function extractSpaceDockId(url: string | undefined): number | null {
   return match ? parseInt(match[1], 10) : null
 }
 
+function compareVersions(a: string, b: string): number {
+  const pa = a.split('.').map(Number)
+  const pb = b.split('.').map(Number)
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const va = pa[i] ?? 0
+    const vb = pb[i] ?? 0
+    if (va !== vb) return va - vb
+  }
+  return 0
+}
+
 const { dbPath, repoPath } = workerData as { dbPath: string; repoPath: string }
 
 const db = new Database(dbPath)
@@ -82,25 +93,45 @@ try {
         try { files = fs.readdirSync(modPath).filter(f => f.endsWith('.ckan')) }
         catch { continue }
 
+        // Parse all versions of this mod, find the latest
+        const parsed: CkanFile[] = []
         for (const file of files) {
           try {
             const raw = fs.readFileSync(path.join(modPath, file), 'utf-8')
-            const c: CkanFile = JSON.parse(raw)
-            const author = Array.isArray(c.author) ? c.author.join(', ') : c.author
-            const license = Array.isArray(c.license) ? c.license.join(', ') : c.license
-            const sdId = extractSpaceDockId(c.resources?.spacedock)
-            const now = Date.now()
+            parsed.push(JSON.parse(raw) as CkanFile)
+          } catch (err: any) {
+            parentPort?.postMessage({ type: 'warn', message: `Failed to parse ${file}: ${err.message}` })
+          }
+        }
+        if (parsed.length === 0) continue
 
-            upsertMod.run(
-              c.identifier, c.name, c.abstract ?? null, author, license, c.version,
-              c.ksp_version ?? null, c.ksp_version_min ?? null, c.ksp_version_max ?? null,
-              c.download ?? null, c.download_size ?? null, sdId,
-              c.tags ? JSON.stringify(c.tags) : null,
-              c.resources ? JSON.stringify(c.resources) : null,
-              (c as any).release_date ?? null,
-              now
-            )
+        // Sort by version descending to find the latest
+        parsed.sort((a, b) => compareVersions(b.version, a.version))
+        const latest = parsed[0]
 
+        // Insert/update the mod entry with latest version's info
+        const author = Array.isArray(latest.author) ? latest.author.join(', ') : latest.author
+        const license = Array.isArray(latest.license) ? latest.license.join(', ') : latest.license
+        const sdId = extractSpaceDockId(latest.resources?.spacedock)
+        const now = Date.now()
+
+        try {
+          upsertMod.run(
+            latest.identifier, latest.name, latest.abstract ?? null, author, license, latest.version,
+            latest.ksp_version ?? null, latest.ksp_version_min ?? null, latest.ksp_version_max ?? null,
+            latest.download ?? null, latest.download_size ?? null, sdId,
+            latest.tags ? JSON.stringify(latest.tags) : null,
+            latest.resources ? JSON.stringify(latest.resources) : null,
+            (latest as any).release_date ?? null,
+            now
+          )
+        } catch (err: any) {
+          parentPort?.postMessage({ type: 'warn', message: `Failed to index mod ${latest.identifier}: ${err.message}` })
+        }
+
+        // Insert all versions
+        for (const c of parsed) {
+          try {
             upsertVersion.run(
               c.identifier, c.version,
               c.ksp_version ?? null, c.ksp_version_min ?? null, c.ksp_version_max ?? null,
@@ -114,7 +145,7 @@ try {
               JSON.stringify(c.install ?? [])
             )
           } catch (err: any) {
-            parentPort?.postMessage({ type: 'warn', message: `Failed to index ${file}: ${err.message}` })
+            parentPort?.postMessage({ type: 'warn', message: `Failed to index version ${c.identifier}@${c.version}: ${err.message}` })
           }
         }
       }
