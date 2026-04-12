@@ -267,6 +267,15 @@ export class ProfileService {
   }
 
   scanInstalledMods(profileId: string): { found: number; mods: string[]; fromCkan: number } {
+    try {
+      return this._scanInstalledModsImpl(profileId)
+    } catch (err) {
+      console.error(`[profile] scanInstalledMods crashed:`, err)
+      return { found: 0, mods: [], fromCkan: 0 }
+    }
+  }
+
+  private _scanInstalledModsImpl(profileId: string): { found: number; mods: string[]; fromCkan: number } {
     const profile = this.db.getProfile(profileId)
     if (!profile) return { found: 0, mods: [], fromCkan: 0 }
 
@@ -387,16 +396,36 @@ export class ProfileService {
     // CKAN registry format: { "installed_modules": { "identifier": { "module": {...}, "files": [...] } } }
     const installedModules = registryData.installed_modules || registryData.InstalledModules || {}
 
+    if (typeof installedModules !== 'object' || installedModules === null) {
+      console.log('[profile] CKAN registry has no installed_modules object')
+      return results
+    }
+
     for (const [identifier, entry] of Object.entries(installedModules)) {
-      const modEntry = entry as any
-      const modInfo = modEntry.module || modEntry.Module || {}
-      const version = modInfo.version || modInfo.Version || 'unknown'
-      const files: string[] = modEntry.files || modEntry.Files || modEntry.installed_files || []
+      try {
+        const modEntry = entry as any
+        if (!modEntry || typeof modEntry !== 'object') continue
 
-      // CKAN files are relative to KSP root
-      const normalizedFiles = files.map((f: string) => f.replace(/\\/g, '/'))
+        const modInfo = modEntry.module || modEntry.Module || {}
+        const version = String(modInfo.version || modInfo.Version || 'unknown')
 
-      results.push({ identifier, version, files: normalizedFiles })
+        // Files can be an array of strings or an array of objects
+        let rawFiles = modEntry.files || modEntry.Files || modEntry.installed_files || []
+        if (!Array.isArray(rawFiles)) rawFiles = []
+
+        const normalizedFiles: string[] = []
+        for (const f of rawFiles) {
+          if (typeof f === 'string') {
+            normalizedFiles.push(f.replace(/\\/g, '/'))
+          } else if (f && typeof f === 'object' && f.path) {
+            normalizedFiles.push(String(f.path).replace(/\\/g, '/'))
+          }
+        }
+
+        results.push({ identifier, version, files: normalizedFiles })
+      } catch (err) {
+        console.log(`[profile] Failed to parse CKAN mod entry ${identifier}:`, err)
+      }
     }
 
     console.log(`[profile] Found ${results.length} mods in CKAN registry`)

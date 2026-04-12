@@ -163,6 +163,9 @@ export class ImageScraperService {
   private cache = new Map<string, { images: string[]; fetchedAt: number }>()
   private descriptionCache = new Map<string, { html: string; fetchedAt: number }>()
   private cacheDir: string
+  private browserQueue: Array<{ url: string; resolve: (html: string | null) => void }> = []
+  private activeBrowsers = 0
+  private readonly MAX_BROWSERS = 2
 
   constructor(db: DatabaseService, cacheDir: string) {
     this.db = db
@@ -419,6 +422,25 @@ export class ImageScraperService {
 
   private fetchWithBrowser(url: string): Promise<string | null> {
     return new Promise((resolve) => {
+      if (this.activeBrowsers >= this.MAX_BROWSERS) {
+        // Queue it
+        this.browserQueue.push({ url, resolve })
+        return
+      }
+      this.activeBrowsers++
+      this._launchBrowser(url, (result) => {
+        this.activeBrowsers--
+        resolve(result)
+        // Process next in queue
+        if (this.browserQueue.length > 0) {
+          const next = this.browserQueue.shift()!
+          this.fetchWithBrowser(next.url).then(next.resolve)
+        }
+      })
+    })
+  }
+
+  private _launchBrowser(url: string, resolve: (html: string | null) => void): void {
       console.log('[forum-scraper] Loading:', url)
 
       let resolved = false
@@ -499,6 +521,5 @@ export class ImageScraperService {
         console.log('[forum-scraper] loadURL error:', err)
         done(null, 'loadURL error')
       })
-    })
   }
 }
