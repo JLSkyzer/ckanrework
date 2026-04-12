@@ -119,6 +119,29 @@ export class DatabaseService {
         VALUES ('delete', old.rowid, old.identifier, old.name, old.abstract, old.author, old.tags);
       END;
     `)
+
+    // Migrations for existing databases
+    try {
+      // Make download_url nullable (was NOT NULL in older versions)
+      const cols = this.db.prepare("PRAGMA table_info(mod_versions)").all() as Array<{ name: string; notnull: number }>
+      const dlCol = cols.find(c => c.name === 'download_url')
+      if (dlCol && dlCol.notnull === 1) {
+        // SQLite can't ALTER COLUMN, recreate table
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS mod_versions_new (
+            identifier TEXT NOT NULL, version TEXT NOT NULL,
+            ksp_version TEXT, ksp_version_min TEXT, ksp_version_max TEXT,
+            download_url TEXT, download_hash TEXT, download_size INTEGER,
+            depends TEXT, recommends TEXT, suggests TEXT, conflicts TEXT,
+            install_directives TEXT NOT NULL,
+            PRIMARY KEY (identifier, version)
+          );
+          INSERT OR IGNORE INTO mod_versions_new SELECT * FROM mod_versions;
+          DROP TABLE mod_versions;
+          ALTER TABLE mod_versions_new RENAME TO mod_versions;
+        `)
+      }
+    } catch { /* migration already applied or not needed */ }
   }
 
   listTables(): string[] {
