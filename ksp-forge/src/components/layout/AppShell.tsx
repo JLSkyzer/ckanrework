@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { DownloadProgress } from '../install/DownloadProgress'
 import { useInstallStore } from '../../stores/install-store'
@@ -13,13 +13,14 @@ import { DownloadsView } from '../downloads/DownloadsView'
 
 export function AppShell() {
   const { currentView } = useUiStore()
-  const { syncIfNeeded, syncing, syncStatus, syncProgress, modCount } = useModStore()
+  const { syncIfNeeded, syncing, syncStatus, syncProgress, syncError, retrySyncIfNeeded, modCount } = useModStore()
   const installProgress = useInstallStore(s => s.progress)
   const pendingRecovery = useInstallStore(s => s.pendingRecovery)
   const { resumeRecovery, dismissRecovery, checkRecovery } = useInstallStore()
   const { fetchProfiles, activeProfileId, fetchInstalledMods } = useProfileStore()
   const [overlayCollapsed, setOverlayCollapsed] = useState(true)
   const [updateInfo, setUpdateInfo] = useState<{ latestVersion: string; url: string } | null>(null)
+  const wasSyncingRef = useRef(false)
 
   useEffect(() => {
     syncIfNeeded()
@@ -30,9 +31,18 @@ export function AppShell() {
     }).catch(() => {})
   }, [])
 
+  // Track syncing transitions so scan only fires after sync completes
+  useEffect(() => {
+    if (syncing) {
+      wasSyncingRef.current = true
+    }
+  }, [syncing])
+
   // Auto-scan GameData for already installed mods after sync completes
   useEffect(() => {
-    if (!syncing && modCount > 0 && activeProfileId) {
+    // Only run when sync has transitioned from true→false (not on cold start where syncing was never true)
+    const syncJustFinished = wasSyncingRef.current && !syncing
+    if (syncJustFinished && modCount > 0 && activeProfileId) {
       window.electronAPI?.profiles?.scanInstalled(activeProfileId).then((result) => {
         if (result?.found > 0) {
           console.log(`Auto-detected ${result.found} installed mods:`, result.mods)
@@ -142,6 +152,17 @@ export function AppShell() {
               <p className="text-xs text-[rgba(148,163,184,0.4)] text-center max-w-sm">
                 First launch — downloading and indexing the CKAN mod registry. This only happens once.
               </p>
+            </div>
+          ) : syncError ? (
+            <div className="flex flex-col items-center justify-center h-full gap-4 px-8">
+              <p className="text-[rgba(248,113,113,0.9)] font-semibold text-lg">Failed to load mod registry</p>
+              <p className="text-[rgba(148,163,184,0.7)] text-sm text-center max-w-sm">{syncError}</p>
+              <button
+                onClick={retrySyncIfNeeded}
+                className="mt-2 px-5 py-2 rounded-lg bg-[rgba(99,102,241,0.8)] hover:bg-[rgba(99,102,241,1)] text-white text-sm font-semibold cursor-pointer transition-colors"
+              >
+                Retry
+              </button>
             </div>
           ) : (
             renderContent()

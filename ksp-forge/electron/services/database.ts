@@ -52,7 +52,7 @@ export class DatabaseService {
         ksp_version         TEXT,
         ksp_version_min     TEXT,
         ksp_version_max     TEXT,
-        download_url        TEXT NOT NULL,
+        download_url        TEXT,
         download_hash       TEXT,
         download_size       INTEGER,
         depends             TEXT,

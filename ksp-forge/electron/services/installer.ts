@@ -289,12 +289,14 @@ export class InstallerService {
 
       // Apply filters
       if (directive.filter) {
+        const filters = Array.isArray(directive.filter) ? directive.filter : [directive.filter]
         const basename = path.basename(entryPath)
-        if (directive.filter.some((f) => basename === f || entryPath.includes(f))) continue
+        if (filters.some((f) => basename === f || entryPath.includes(f))) continue
       }
       if (directive.filter_regexp) {
+        const filterRegexps = Array.isArray(directive.filter_regexp) ? directive.filter_regexp : [directive.filter_regexp]
         const basename = path.basename(entryPath)
-        if (directive.filter_regexp.some((r) => { try { return new RegExp(r).test(basename) } catch { return false } })) continue
+        if (filterRegexps.some((r) => { try { return new RegExp(r).test(basename) } catch { return false } })) continue
       }
 
       // Compute destination relative to kspPath

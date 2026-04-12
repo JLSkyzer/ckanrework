@@ -104,16 +104,18 @@ try {
             upsertVersion.run(
               c.identifier, c.version,
               c.ksp_version ?? null, c.ksp_version_min ?? null, c.ksp_version_max ?? null,
-              c.download,
+              c.download ?? null,
               c.download_hash?.sha256 ?? c.download_hash?.sha1 ?? null,
               c.download_size ?? null,
               c.depends ? JSON.stringify(c.depends) : null,
               c.recommends ? JSON.stringify(c.recommends) : null,
               c.suggests ? JSON.stringify(c.suggests) : null,
               c.conflicts ? JSON.stringify(c.conflicts) : null,
-              JSON.stringify(c.install)
+              JSON.stringify(c.install ?? [])
             )
-          } catch { /* skip malformed */ }
+          } catch (err: any) {
+            parentPort?.postMessage({ type: 'warn', message: `Failed to index ${file}: ${err.message}` })
+          }
         }
       }
     })

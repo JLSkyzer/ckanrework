@@ -72,7 +72,16 @@ export class ResolverService {
     if (installed.has(identifier)) return
 
     const versions = this.db.getModVersions(identifier)
-    if (versions.length === 0) { missing.push(identifier); return }
+    if (versions.length === 0) {
+      if (isDependency) {
+        // Dependency has no downloadable version — it may be a virtual/meta package
+        warnings.push(`${identifier}: no downloadable version found (dependency may be provided by another mod)`)
+      } else {
+        // Explicitly requested mod has no downloadable version
+        missing.push(identifier)
+      }
+      return
+    }
 
     const compatible = this.findCompatibleVersion(versions, kspVersion)
     const selected = compatible ?? versions[0]

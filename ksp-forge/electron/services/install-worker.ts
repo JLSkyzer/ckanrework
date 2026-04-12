@@ -11,7 +11,7 @@ interface InstallJob {
   version: string
   downloadUrl: string
   hash: string | null
-  directives: Array<{ find?: string; file?: string; install_to: string; filter?: string[] }>
+  directives: Array<{ find?: string; file?: string; install_to: string; filter?: string | string[] }>
   kspPath: string
   tempDir: string
 }
@@ -136,8 +136,9 @@ function applyDirective(
     }
 
     if (directive.filter) {
+      const filters = Array.isArray(directive.filter) ? directive.filter : [directive.filter]
       const name = path.basename(entryPath)
-      if (directive.filter.some(f => name === f || entryPath.includes(f))) continue
+      if (filters.some(f => name === f || entryPath.includes(f))) continue
     }
 
     const relDest = path.join(installTo, entryPath)

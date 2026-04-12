@@ -38,8 +38,8 @@ export interface InstallDirective {
   file?: string
   find_regexp?: string
   install_to: string
-  filter?: string[]
-  filter_regexp?: string[]
+  filter?: string | string[]
+  filter_regexp?: string | string[]
 }
 
 export interface ModRow {

@@ -9,6 +9,7 @@ interface ModState {
   syncing: boolean
   syncStatus: string
   syncProgress: number
+  syncError: string | null
   spacedockCache: Map<string, SpaceDockCacheRow>
 
   kspVersions: string[]
@@ -20,6 +21,7 @@ interface ModState {
   fetchKspVersions: () => Promise<void>
   syncMeta: () => Promise<void>
   syncIfNeeded: () => Promise<void>
+  retrySyncIfNeeded: () => Promise<void>
 }
 
 export const useModStore = create<ModState>((set, get) => ({
@@ -29,6 +31,7 @@ export const useModStore = create<ModState>((set, get) => ({
   syncing: false,
   syncStatus: '',
   syncProgress: 0,
+  syncError: null,
   kspVersions: [],
   spacedockCache: new Map(),
 
@@ -103,7 +106,7 @@ export const useModStore = create<ModState>((set, get) => ({
   },
 
   syncMeta: async () => {
-    set({ syncing: true, syncStatus: 'Downloading CKAN mod registry...', syncProgress: 0 })
+    set({ syncing: true, syncStatus: 'Downloading CKAN mod registry...', syncProgress: 0, syncError: null })
 
     // Listen for progress updates from main process
     const cleanup = api.meta.onSyncProgress(({ current, total, phase }) => {
@@ -118,6 +121,10 @@ export const useModStore = create<ModState>((set, get) => ({
       await api.meta.sync()
       await get().fetchMods()
       set({ syncStatus: '', syncProgress: 100 })
+    } catch (err: any) {
+      const message = err?.message ?? 'Unknown error during sync'
+      console.error('[mod-store] syncMeta failed:', err)
+      set({ syncError: message, syncStatus: '' })
     } finally {
       cleanup()
       set({ syncing: false })
@@ -132,12 +139,23 @@ export const useModStore = create<ModState>((set, get) => ({
   },
 
   syncIfNeeded: async () => {
-    const count = await api.mods.getCount()
-    if (count === 0) {
-      await get().syncMeta()
-    } else {
-      await get().fetchMods()
+    try {
+      const count = await api.mods.getCount()
+      if (count === 0) {
+        await get().syncMeta()
+      } else {
+        await get().fetchMods()
+      }
+      await get().fetchKspVersions()
+    } catch (err: any) {
+      const message = err?.message ?? 'Unknown error'
+      console.error('[mod-store] syncIfNeeded failed:', err)
+      set({ syncError: message, syncing: false })
     }
-    await get().fetchKspVersions()
+  },
+
+  retrySyncIfNeeded: async () => {
+    set({ syncError: null })
+    await get().syncIfNeeded()
   },
 }))

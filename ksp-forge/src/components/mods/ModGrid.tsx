@@ -33,14 +33,36 @@ function getModKspVersion(mod: { ksp_version: string | null; ksp_version_min: st
 export function ModGrid({ filter = 'all' }: ModGridProps) {
   const { mods, loading, fetchSpaceDockBatch, spacedockCache } = useModStore()
   const { installedMods, activeProfileId, fetchInstalledMods } = useProfileStore()
-  const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly } = useUiStore()
+  const { currentView, filterKspVersionMin, filterKspVersionMax, filterCompatibleOnly, discoverScrollPosition, setDiscoverScrollPosition, openModDetail } = useUiStore()
   const { getActiveProfile } = useProfileStore()
   const { resolution, showDialog, installing, progress, confirmInstall, cancelInstall, requestInstall } = useInstallStore()
   const parentRef = useRef<HTMLDivElement>(null)
+  const scrollRestoredRef = useRef(false)
 
   const handleCardInstall = useCallback((identifier: string) => {
     requestInstall([identifier])
   }, [requestInstall])
+
+  // Save scroll position before navigating to mod detail
+  const handleOpenModDetail = useCallback((id: string) => {
+    if (parentRef.current) {
+      setDiscoverScrollPosition(parentRef.current.scrollTop)
+    }
+    openModDetail(id)
+  }, [openModDetail, setDiscoverScrollPosition])
+
+  // Restore scroll position when component mounts (coming back from mod detail)
+  useEffect(() => {
+    if (!scrollRestoredRef.current && parentRef.current && discoverScrollPosition > 0) {
+      scrollRestoredRef.current = true
+      // Use rAF to ensure the virtualizer has rendered before scrolling
+      requestAnimationFrame(() => {
+        if (parentRef.current) {
+          parentRef.current.scrollTop = discoverScrollPosition
+        }
+      })
+    }
+  }, [])
 
   const isInstalledView = currentView === 'installed' || filter === 'installed'
 
@@ -210,7 +232,7 @@ export function ModGrid({ filter = 'all' }: ModGridProps) {
                   }}
                 >
                   {rowMods.map((mod) => (
-                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} incompatible={incompatibleSet.has(mod.identifier)} onInstall={handleCardInstall} />
+                    <ModCard key={mod.identifier} mod={mod} isInstalled={installedSet.has(mod.identifier)} incompatible={incompatibleSet.has(mod.identifier)} onInstall={handleCardInstall} onOpenDetail={isInstalledView ? undefined : handleOpenModDetail} />
                   ))}
                 </div>
               )

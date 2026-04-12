@@ -13,10 +13,12 @@ interface ModCardProps {
   isInstalled: boolean
   incompatible?: boolean
   onInstall: (identifier: string) => void
+  onOpenDetail?: (identifier: string) => void
 }
 
-export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, onInstall }: ModCardProps) {
+export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, onInstall, onOpenDetail }: ModCardProps) {
   const { openModDetail } = useUiStore()
+  const handleOpenDetail = onOpenDetail ?? openModDetail
   const { spacedockCache } = useModStore()
 
   const sdData = spacedockCache.get(mod.identifier) ?? null
@@ -66,7 +68,7 @@ export const ModCard = memo(function ModCard({ mod, isInstalled, incompatible, o
 
   return (
     <div
-      onClick={() => openModDetail(mod.identifier)}
+      onClick={() => handleOpenDetail(mod.identifier)}
       className="
         group relative flex flex-col rounded-xl overflow-hidden cursor-pointer
         bg-[rgba(255,255,255,0.03)]

@@ -29,6 +29,7 @@ interface UiState extends FilterState {
   previousView: ViewName | null
   selectedModId: string | null
   searchQuery: string
+  discoverScrollPosition: number
 
   setView: (view: ViewName) => void
   setSelectedMod: (id: string | null) => void
@@ -41,6 +42,7 @@ interface UiState extends FilterState {
   resetFilters: () => void
   openModDetail: (id: string) => void
   goBack: () => void
+  setDiscoverScrollPosition: (pos: number) => void
 }
 
 const savedFilters = loadFilters()
@@ -50,6 +52,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   previousView: null,
   selectedModId: null,
   searchQuery: '',
+  discoverScrollPosition: 0,
   ...savedFilters,
 
   setView: (view) =>
@@ -113,4 +116,6 @@ export const useUiStore = create<UiState>((set, get) => ({
       previousView: null,
     })
   },
+
+  setDiscoverScrollPosition: (pos) => set({ discoverScrollPosition: pos }),
 }))
