@@ -166,6 +166,7 @@ export class ImageScraperService {
   private browserQueue: Array<{ url: string; resolve: (html: string | null) => void }> = []
   private activeBrowsers = 0
   private readonly MAX_BROWSERS = 2
+  private failedUrls = new Set<string>()
 
   constructor(db: DatabaseService, cacheDir: string) {
     this.db = db
@@ -309,6 +310,7 @@ export class ImageScraperService {
         resolved = true
         clearTimeout(timer)
         console.log('[forum-scraper] Description done:', reason)
+        if (!result) this.failedUrls.add(url)
         try { win.destroy() } catch {}
         resolve(result)
       }
@@ -421,6 +423,9 @@ export class ImageScraperService {
   }
 
   private fetchWithBrowser(url: string): Promise<string | null> {
+    // Don't retry URLs that already failed in this session
+    if (this.failedUrls.has(url)) return Promise.resolve(null)
+
     return new Promise((resolve) => {
       if (this.activeBrowsers >= this.MAX_BROWSERS) {
         // Queue it
@@ -449,6 +454,7 @@ export class ImageScraperService {
         resolved = true
         clearTimeout(timer)
         console.log('[forum-scraper] Done:', reason, result ? `(${result.length} chars)` : '(null)')
+        if (!result) this.failedUrls.add(url)
         try { win.destroy() } catch {}
         resolve(result)
       }

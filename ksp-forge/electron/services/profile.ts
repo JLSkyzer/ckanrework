@@ -287,76 +287,84 @@ export class ProfileService {
     let fromCkan = 0
 
     // --- Phase 1: Import from CKAN registry if it exists ---
-    const ckanRegistryMods = this.readCkanRegistry(profile.ksp_path)
-    for (const ckanMod of ckanRegistryMods) {
-      if (alreadyInstalled.has(ckanMod.identifier)) continue
+    try {
+      const ckanRegistryMods = this.readCkanRegistry(profile.ksp_path)
+      for (const ckanMod of ckanRegistryMods) {
+        try {
+          if (alreadyInstalled.has(ckanMod.identifier)) continue
+          const dbMod = this.db.getMod(ckanMod.identifier)
+          if (!dbMod) continue
 
-      // Verify mod exists in our DB
-      const dbMod = this.db.getMod(ckanMod.identifier)
-      if (!dbMod) continue
-
-      this.db.addInstalledMod({
-        profile_id: profileId,
-        identifier: ckanMod.identifier,
-        version: ckanMod.version,
-        installed_files: JSON.stringify(ckanMod.files),
-        installed_at: Date.now(),
-      })
-      alreadyInstalled.add(ckanMod.identifier)
-      foundMods.push(ckanMod.identifier)
-      fromCkan++
+          this.db.addInstalledMod({
+            profile_id: profileId,
+            identifier: ckanMod.identifier,
+            version: String(ckanMod.version),
+            installed_files: JSON.stringify(ckanMod.files || []),
+            installed_at: Date.now(),
+          })
+          alreadyInstalled.add(ckanMod.identifier)
+          foundMods.push(ckanMod.identifier)
+          fromCkan++
+        } catch (err) {
+          console.error(`[profile] Failed to import CKAN mod ${ckanMod.identifier}:`, err)
+        }
+      }
+    } catch (err) {
+      console.error('[profile] Phase 1 (CKAN registry) failed:', err)
     }
 
     // --- Phase 2: Scan GameData folders ---
-    const stockDirs = new Set(['Squad', 'SquadExpansion'])
-    let entries: string[]
     try {
-      entries = fs.readdirSync(gameDataPath)
-        .filter(e => !stockDirs.has(e) && !e.startsWith('.'))
-    } catch { return { found: foundMods.length, mods: foundMods, fromCkan } }
-
-    const allMods = this.db.getAllMods()
-    const folderToMod = new Map<string, { identifier: string; version: string }>()
-
-    for (const mod of allMods) {
-      const versions = this.db.getModVersions(mod.identifier)
-      if (versions.length === 0) continue
-      const latest = versions[0]
+      const stockDirs = new Set(['Squad', 'SquadExpansion'])
+      let entries: string[]
       try {
-        const directives = JSON.parse(latest.install_directives) as Array<{ find?: string; file?: string; install_to?: string }>
-        for (const d of directives) {
-          if (d.install_to === 'GameData' && d.find) {
-            folderToMod.set(d.find, { identifier: mod.identifier, version: latest.version })
+        entries = fs.readdirSync(gameDataPath)
+          .filter(e => !stockDirs.has(e) && !e.startsWith('.'))
+      } catch { return { found: foundMods.length, mods: foundMods, fromCkan } }
+
+      // Build lookup from mod install directives — use a single query for all versions
+      const allMods = this.db.getAllMods()
+      const folderToMod = new Map<string, { identifier: string; version: string }>()
+
+      for (const mod of allMods) {
+        try {
+          const versions = this.db.getModVersions(mod.identifier)
+          if (versions.length === 0) continue
+          const latest = versions[0]
+          const directives = JSON.parse(latest.install_directives || '[]') as Array<{ find?: string; file?: string; install_to?: string }>
+          for (const d of directives) {
+            if (d.install_to === 'GameData' && d.find) {
+              folderToMod.set(d.find, { identifier: mod.identifier, version: latest.version })
+            }
           }
-        }
-      } catch { /* skip */ }
-    }
+          // Also match by identifier
+          if (!folderToMod.has(mod.identifier)) {
+            folderToMod.set(mod.identifier, { identifier: mod.identifier, version: latest.version })
+          }
+        } catch { /* skip single mod */ }
+      }
 
-    for (const mod of allMods) {
-      if (!folderToMod.has(mod.identifier)) {
-        const versions = this.db.getModVersions(mod.identifier)
-        if (versions.length > 0) {
-          folderToMod.set(mod.identifier, { identifier: mod.identifier, version: versions[0].version })
+      for (const entry of entries) {
+        try {
+          const match = folderToMod.get(entry)
+          if (match && !alreadyInstalled.has(match.identifier)) {
+            const entryPath = path.join(gameDataPath, entry)
+            const files = this.collectFiles(entryPath, profile.ksp_path)
+            this.db.addInstalledMod({
+              profile_id: profileId,
+              identifier: match.identifier,
+              version: match.version,
+              installed_files: JSON.stringify(files),
+              installed_at: Date.now(),
+            })
+            foundMods.push(match.identifier)
+          }
+        } catch (err) {
+          console.error(`[profile] Failed to scan GameData entry ${entry}:`, err)
         }
       }
-    }
-
-    for (const entry of entries) {
-      const match = folderToMod.get(entry)
-      if (match && !alreadyInstalled.has(match.identifier)) {
-        // Register as installed
-        const entryPath = path.join(gameDataPath, entry)
-        const files = this.collectFiles(entryPath, profile.ksp_path)
-
-        this.db.addInstalledMod({
-          profile_id: profileId,
-          identifier: match.identifier,
-          version: match.version,
-          installed_files: JSON.stringify(files),
-          installed_at: Date.now(),
-        })
-        foundMods.push(match.identifier)
-      }
+    } catch (err) {
+      console.error('[profile] Phase 2 (GameData scan) failed:', err)
     }
 
     return { found: foundMods.length, mods: foundMods, fromCkan }

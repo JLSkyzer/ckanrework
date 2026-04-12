@@ -243,11 +243,10 @@ export function registerIpcHandlers(services: Services): void {
   ipcMain.handle('profiles:scanInstalled', (_event, profileId: string) => {
     try {
       return profile.scanInstalledMods(profileId)
-    } catch (err: any) {
-      const log = require('./services/logger')
-      log.getLogger?.()?.error?.(`scanInstalled failed: ${err?.message || err}\n${err?.stack || ''}`)
-      console.error('[scanInstalled] Error:', err?.message || err, err?.stack)
-      return { found: 0, mods: [], fromCkan: 0 }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? `${err.message}\n${err.stack}` : JSON.stringify(err)
+      console.error('[scanInstalled] CRASH:', msg)
+      return { found: 0, mods: [], fromCkan: 0, error: msg }
     }
   })
 
