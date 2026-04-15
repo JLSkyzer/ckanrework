@@ -276,14 +276,18 @@ export class ProfileService {
   }
 
   private _scanInstalledModsImpl(profileId: string): { found: number; mods: string[]; fromCkan: number } {
-    const profile = this.db.getProfile(profileId)
-    if (!profile) return { found: 0, mods: [], fromCkan: 0 }
+    console.log(`[profile] scanInstalledMods starting for profile ${profileId}`)
 
+    const profile = this.db.getProfile(profileId)
+    if (!profile) { console.log('[profile] Profile not found'); return { found: 0, mods: [], fromCkan: 0 } }
+
+    console.log(`[profile] KSP path: ${profile.ksp_path}`)
     const gameDataPath = path.join(profile.ksp_path, 'GameData')
-    if (!fs.existsSync(gameDataPath)) return { found: 0, mods: [], fromCkan: 0 }
+    if (!fs.existsSync(gameDataPath)) { console.log('[profile] GameData not found'); return { found: 0, mods: [], fromCkan: 0 } }
 
     const foundMods: string[] = []
     const alreadyInstalled = new Set(this.db.getInstalledMods(profileId).map(m => m.identifier))
+    console.log(`[profile] Already installed in DB: ${alreadyInstalled.size} mods`)
     let fromCkan = 0
 
     // --- Phase 1: Import from CKAN registry if it exists ---
@@ -399,7 +403,8 @@ export class ProfileService {
       }
     }
 
-    if (!registryData) return results
+    if (!registryData) { console.log('[profile] No CKAN registry data found'); return results }
+    console.log(`[profile] CKAN registry keys: ${Object.keys(registryData).join(', ')}`)
 
     // CKAN registry format: { "installed_modules": { "identifier": { "module": {...}, "files": [...] } } }
     const installedModules = registryData.installed_modules || registryData.InstalledModules || {}

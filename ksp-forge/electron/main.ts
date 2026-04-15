@@ -12,6 +12,10 @@ import { ImageScraperService } from './services/image-scraper'
 import { ModCacheService } from './services/mod-cache'
 import { registerIpcHandlers } from './ipc-handlers'
 
+// Force version from package.json (electron-builder PE metadata can be stale)
+import pkg from '../package.json'
+app.setVersion(pkg.version)
+
 const logger = initLogger(join(app.getPath('userData'), 'logs'))
 logger.interceptConsole()
 
