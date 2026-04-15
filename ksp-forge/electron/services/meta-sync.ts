@@ -1,11 +1,16 @@
-import simpleGit from 'simple-git'
 import { Worker } from 'worker_threads'
 import fs from 'fs'
 import path from 'path'
+import https from 'https'
+import { createGunzip } from 'zlib'
+import { exec } from 'child_process'
+import * as tar from 'tar'
+import simpleGit from 'simple-git'
 import type { CkanMetadata, ModRow, ModVersionRow } from '../types'
 import { DatabaseService } from './database'
 
-const CKAN_META_REPO = 'https://github.com/KSP-CKAN/CKAN-meta.git'
+const CKAN_META_TARBALL = 'https://github.com/KSP-CKAN/CKAN-meta/archive/refs/heads/master.tar.gz'
+const CKAN_META_REPO_GIT = 'https://github.com/KSP-CKAN/CKAN-meta.git'
 
 export function extractSpaceDockId(url: string | undefined): number | null {
   if (!url) return null
@@ -64,7 +69,6 @@ export class MetaSyncService {
   constructor(repoPath: string, db: DatabaseService, dbPath?: string) {
     this.repoPath = repoPath
     this.db = db
-    // We need the raw DB path for the worker thread
     this.dbPath = dbPath || ''
   }
 
@@ -73,38 +77,38 @@ export class MetaSyncService {
   }
 
   async sync(onProgress?: (current: number, total: number, phase: string) => void): Promise<number> {
-    const git = simpleGit()
-
-    // Phase 1: Git clone or pull
     onProgress?.(0, 1, 'downloading')
 
-    const gitDir = path.join(this.repoPath, '.git')
-    const lockFile = path.join(gitDir, 'index.lock')
-
-    // Clean up stale lock file from previous crash
-    if (fs.existsSync(lockFile)) {
-      fs.unlinkSync(lockFile)
-    }
-
-    if (!fs.existsSync(gitDir)) {
-      // No .git = either first time or corrupted. Clean and clone.
-      if (fs.existsSync(this.repoPath)) {
-        fs.rmSync(this.repoPath, { recursive: true, force: true })
-      }
-      await git.clone(CKAN_META_REPO, this.repoPath, ['--depth', '1'])
-    } else {
-      try {
+    // Try git first (fast incremental pull), fallback to tarball download (no git needed)
+    let useGit = false
+    try {
+      const gitDir = path.join(this.repoPath, '.git')
+      if (fs.existsSync(gitDir)) {
+        // Existing git repo — try to pull
+        const lockFile = path.join(gitDir, 'index.lock')
+        if (fs.existsSync(lockFile)) {
+          try { fs.unlinkSync(lockFile) } catch {}
+        }
+        const git = simpleGit()
         git.cwd(this.repoPath)
         await git.pull()
-      } catch {
-        // Corrupted repo — nuke and re-clone
-        fs.rmSync(this.repoPath, { recursive: true, force: true })
-        await git.clone(CKAN_META_REPO, this.repoPath, ['--depth', '1'])
+        useGit = true
+      } else {
+        // No existing repo — try git clone first
+        const git = simpleGit()
+        if (fs.existsSync(this.repoPath)) {
+          fs.rmSync(this.repoPath, { recursive: true, force: true })
+        }
+        await git.clone(CKAN_META_REPO_GIT, this.repoPath, ['--depth', '1'])
+        useGit = true
       }
+    } catch (gitErr: any) {
+      console.log(`[meta-sync] Git failed (${gitErr?.message || gitErr}), falling back to tarball download`)
+      // Git not available or failed — download tarball
+      await this.downloadTarball(onProgress)
     }
 
-    // Phase 2: Index in a worker thread (doesn't block main process)
-    // Worker opens its own DB connection — WAL mode supports concurrent readers/writers
+    // Phase 2: Index in a worker thread
     onProgress?.(0, 1, 'indexing')
 
     const count = await new Promise<number>((resolve, reject) => {
@@ -127,5 +131,81 @@ export class MetaSyncService {
     })
 
     return count
+  }
+
+  private downloadTarball(onProgress?: (current: number, total: number, phase: string) => void): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Clean existing directory
+      if (fs.existsSync(this.repoPath)) {
+        fs.rmSync(this.repoPath, { recursive: true, force: true })
+      }
+      fs.mkdirSync(this.repoPath, { recursive: true })
+
+      const tmpFile = this.repoPath + '.tar.gz'
+
+      // Download the tarball
+      const download = (url: string, redirects = 0): void => {
+        if (redirects > 5) { reject(new Error('Too many redirects')); return }
+
+        https.get(url, { headers: { 'User-Agent': 'KSP-Forge' } }, (res) => {
+          // Follow redirects
+          if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+            download(res.headers.location, redirects + 1)
+            return
+          }
+
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(new Error(`HTTP ${res.statusCode} downloading CKAN-meta`))
+            return
+          }
+
+          const fileStream = fs.createWriteStream(tmpFile)
+          const total = res.headers['content-length'] ? parseInt(res.headers['content-length'], 10) : null
+          let downloaded = 0
+
+          res.on('data', (chunk: Buffer) => {
+            downloaded += chunk.length
+            if (total) onProgress?.(downloaded, total, 'downloading')
+          })
+
+          res.pipe(fileStream)
+          fileStream.on('finish', () => {
+            fileStream.close()
+            // Extract tarball
+            this.extractTarball(tmpFile).then(() => {
+              try { fs.unlinkSync(tmpFile) } catch {}
+              resolve()
+            }).catch(reject)
+          })
+          fileStream.on('error', reject)
+        }).on('error', reject)
+      }
+
+      download(CKAN_META_TARBALL)
+    })
+  }
+
+  private extractTarball(tarPath: string): Promise<void> {
+    // Use tar module or manual extraction
+    // The tar.gz contains CKAN-meta-master/ as root folder
+    // We need to strip that prefix and extract to this.repoPath
+    return tar.x({
+      file: tarPath,
+      cwd: this.repoPath,
+      strip: 1,
+    }).catch((tarErr: any) => {
+      console.log('[meta-sync] tar module failed, trying child_process:', tarErr?.message)
+      return this.extractWithProcess(tarPath)
+    })
+  }
+
+  private extractWithProcess(tarPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const cmd = `tar -xzf "${tarPath}" -C "${this.repoPath}" --strip-components=1`
+      exec(cmd, (err) => {
+        if (err) reject(new Error(`tar extraction failed: ${err.message}`))
+        else resolve()
+      })
+    })
   }
 }

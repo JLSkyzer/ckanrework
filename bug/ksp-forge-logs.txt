@@ -1,0 +1,418 @@
+=== ksp-forge-2026-04-10.log ===
+[2026-04-10 12:47:28] [INFO] KSP Forge starting
+[2026-04-10 12:47:28] [INFO] Version: 0.5.0, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-10 12:47:29] [INFO] Initializing database...
+[2026-04-10 12:47:29] [INFO] Initializing services...
+[2026-04-10 12:47:29] [INFO] Registering IPC handlers...
+[2026-04-10 12:47:29] [INFO] Creating main window...
+[2026-04-10 12:47:30] [INFO] Meta sync started
+[2026-04-10 12:47:34] [INFO] Meta sync started
+[2026-04-10 12:47:49] [INFO] All windows closed, quitting
+[2026-04-10 12:48:21] [INFO] KSP Forge starting
+[2026-04-10 12:48:21] [INFO] Version: 0.5.0, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-10 12:48:21] [INFO] Initializing database...
+[2026-04-10 12:48:21] [INFO] Initializing services...
+[2026-04-10 12:48:21] [INFO] Registering IPC handlers...
+[2026-04-10 12:48:21] [INFO] Creating main window...
+[2026-04-10 12:48:21] [INFO] Meta sync started
+[2026-04-10 12:48:21] [ERROR] Error occurred in handler for 'meta:sync': {"errno":-4082,"code":"EBUSY","syscall":"unlink","path":"D:\\Roaming\\ksp-forge\\ckan-meta\\.git\\index.lock"}
+[2026-04-10 12:48:34] [INFO] Meta sync started
+[2026-04-10 12:48:34] [ERROR] Error occurred in handler for 'meta:sync': {"errno":-4082,"code":"EBUSY","syscall":"unlink","path":"D:\\Roaming\\ksp-forge\\ckan-meta\\.git\\index.lock"}
+[2026-04-10 12:48:45] [INFO] Meta sync started
+[2026-04-10 12:48:53] [INFO] Meta sync complete: 3704 mods indexed
+[2026-04-10 12:48:53] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-10 12:48:53] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/157214-12-flight
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/106518-113-pebkac-industries-launch-escape-system-20160706-now-includes-mk1-les/&page=1
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/116440-iva104-mk1-2-pod-iva-replacement-by-aset-wip
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/128491-wip-otter-submersible-usi-submarine-parts/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/121597-*
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205409-atomictech-hardware-serializing-system-ksp-020-version-01/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/167867-131-almost-real-solar-system-v102/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/200767-flags
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/topic/228426-1-thousand-special-planet-pack-ksp-1125/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/142059-2kas-j0523-planetary-system/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/188213-17x-4ksp-scaled-map-icons-and-text/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/197794-18x-19x-110x-4ksp-expanded/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/164300-13-64x-size-128x-distances/
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/161402-*
+[2026-04-10 12:49:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-10 12:49:02] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/188213-17x-4ksp-scaled-map-icons-and-text/
+[2026-04-10 12:49:06] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:49:06] [INFO] [forum-scraper] Description extracted: 2360 chars, 1 images
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/128491-wip-otter-submersible-usi-submarine-parts/
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/121597-*
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/142059-2kas-j0523-planetary-system/
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/161402-*
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:49:29] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:49:29] [INFO] [forum-scraper] Description extracted: 1528 chars, 1 images
+[2026-04-10 12:49:30] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:49:30] [INFO] [forum-scraper] Description extracted: 1819 chars, 1 images
+[2026-04-10 12:49:30] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:49:30] [INFO] [forum-scraper] Description extracted: 2141 chars, 0 images
+[2026-04-10 12:49:31] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:49:31] [INFO] [forum-scraper] Description extracted: 4618 chars, 1 images
+[2026-04-10 12:49:50] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:52:18] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-10 12:52:19] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-10 12:52:19] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-10 12:52:19] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/184577-apus-aerospace-passenger-and-utility-system/
+[2026-04-10 12:52:19] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/96141-ab-launchers
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/172663-*
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/182622-*
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/30974-*
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/topic/220718-112-alcor-pod-adopted
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/50272-122alcoradvanced-landing-capsule-for-orbital-rendezvous-by-aset-08012017/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/211009-1124-anglecan-achievement-tree-11/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205097-1122-anglecan-part-tweaks-10/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/204809-122-anglecan-progression-10/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/204809-112x-anglecan-progression-13/
+[2026-04-10 12:52:20] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/195238-aq
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description extracted: 3763 chars, 5 images
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description extracted: 7022 chars, 0 images
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description extracted: 2070 chars, 1 images
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description extracted: 4171 chars, 1 images
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:23] [INFO] [forum-scraper] Description extracted: 5400 chars, 2 images
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description extracted: 2555 chars, 0 images
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description extracted: 7022 chars, 0 images
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:24] [INFO] [forum-scraper] Description extracted: 4926 chars, 2 images
+[2026-04-10 12:52:25] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:25] [INFO] [forum-scraper] Description extracted: 4521 chars, 0 images
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description extracted: 7441 chars, 4 images
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description extracted: 67615 chars, 10 images
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-10 12:52:26] [INFO] [forum-scraper] Description extracted: 5057 chars, 1 images
+[2026-04-10 12:52:43] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-10 12:52:44] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-10 12:52:44] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-10 12:52:44] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-10 12:52:45] [INFO] [forum-scraper] Description done: timeout
+[2026-04-10 12:52:45] [INFO] All windows closed, quitting
+
+=== ksp-forge-2026-04-11.log ===
+[2026-04-11 13:38:57] [INFO] KSP Forge starting
+[2026-04-11 13:38:57] [INFO] Version: 0.5.0, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-11 13:38:57] [INFO] Initializing database...
+[2026-04-11 13:38:57] [INFO] Initializing services...
+[2026-04-11 13:38:57] [INFO] Registering IPC handlers...
+[2026-04-11 13:38:57] [INFO] Creating main window...
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/157214-12-flight
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/106518-113-pebkac-industries-launch-escape-system-20160706-now-includes-mk1-les/&page=1
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/116440-iva104-mk1-2-pod-iva-replacement-by-aset-wip
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205409-atomictech-hardware-serializing-system-ksp-020-version-01/
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/167867-131-almost-real-solar-system-v102/
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/200767-flags
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/topic/228426-1-thousand-special-planet-pack-ksp-1125/
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/197794-18x-19x-110x-4ksp-expanded/
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/164300-13-64x-size-128x-distances/
+[2026-04-11 13:38:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 13:38:58] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-11 13:38:58] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-11 13:39:08] [INFO] Switching profile: 213e8225-d81f-4c90-a60c-3c03ceccff0c -> 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:39:08] [INFO] Profile switch complete: 213e8225-d81f-4c90-a60c-3c03ceccff0c -> 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:39:08] [INFO] [profile] Read CKAN registry from F:\ksp mod 测试\Kerbal Space Program (2)\CKAN\registry.json
+[2026-04-11 13:39:08] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-11 13:39:10] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:39:10] [INFO] [forum-scraper] Description extracted: 12876 chars, 10 images
+[2026-04-11 13:39:12] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:39:12] [INFO] [forum-scraper] Description extracted: 3767 chars, 3 images
+[2026-04-11 13:39:19] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:39:19] [INFO] [forum-scraper] Description extracted: 20008 chars, 2 images
+[2026-04-11 13:39:20] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:39:20] [INFO] [forum-scraper] Description extracted: 3127 chars, 0 images
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:39:28] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 13:39:52] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 13:41:02] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/157214-12-flight
+[2026-04-11 13:41:06] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:06] [INFO] [forum-scraper] Description extracted: 25385 chars, 2 images
+[2026-04-11 13:41:16] [INFO] Installing mod: FMRSContinued v1.2.9.4 to profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:21] [INFO] Mod installed successfully: FMRSContinued
+[2026-04-11 13:41:21] [INFO] Installing mod: ModuleManager v4.2.3 to profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:22] [INFO] Mod installed successfully: ModuleManager
+[2026-04-11 13:41:22] [INFO] Installing mod: RecoveryController v0.0.4.1 to profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:27] [INFO] Mod installed successfully: RecoveryController
+[2026-04-11 13:41:27] [INFO] Installing mod: ToolbarController v1:0.1.9.9 to profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:32] [INFO] Mod installed successfully: ToolbarController
+[2026-04-11 13:41:32] [INFO] Installing mod: ClickThroughBlocker v1:2.1.10.20 to profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:38] [INFO] Mod installed successfully: ClickThroughBlocker
+[2026-04-11 13:41:42] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/170747-*
+[2026-04-11 13:41:42] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/50533-*
+[2026-04-11 13:41:42] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/158970-12-recoverycontroller-let-fmrs-and-stagerecovery-work-together/#comment-3015906
+[2026-04-11 13:41:42] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/169509-141-toolbar-controller-for-modders/
+[2026-04-11 13:41:43] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/170747-*
+[2026-04-11 13:41:43] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/169509-141-toolbar-controller-for-modders/
+[2026-04-11 13:41:45] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:45] [INFO] [forum-scraper] Description extracted: 25573 chars, 1 images
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description extracted: 19510 chars, 0 images
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description extracted: 7095 chars, 0 images
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description extracted: 2769 chars, 0 images
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description extracted: 19510 chars, 0 images
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:41:46] [INFO] [forum-scraper] Description extracted: 7095 chars, 0 images
+[2026-04-11 13:41:57] [INFO] Uninstalling mod: FMRSContinued from profile 48ad7b20-3374-4956-902f-a1453030c448
+[2026-04-11 13:41:57] [INFO] Mod uninstalled: FMRSContinued
+[2026-04-11 13:42:07] [INFO] All windows closed, quitting
+[2026-04-11 13:42:26] [INFO] KSP Forge starting
+[2026-04-11 13:42:26] [INFO] Version: 0.5.0, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-11 13:42:26] [INFO] Initializing database...
+[2026-04-11 13:42:26] [INFO] Initializing services...
+[2026-04-11 13:42:26] [INFO] Registering IPC handlers...
+[2026-04-11 13:42:26] [INFO] Creating main window...
+[2026-04-11 13:42:27] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/106518-113-pebkac-industries-launch-escape-system-20160706-now-includes-mk1-les/&page=1
+[2026-04-11 13:42:27] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/116440-iva104-mk1-2-pod-iva-replacement-by-aset-wip
+[2026-04-11 13:42:27] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205409-atomictech-hardware-serializing-system-ksp-020-version-01/
+[2026-04-11 13:42:27] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/167867-131-almost-real-solar-system-v102/
+[2026-04-11 13:42:27] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 13:42:27] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-11 13:42:27] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-11 13:42:30] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:42:30] [INFO] [forum-scraper] Description extracted: 6918 chars, 9 images
+[2026-04-11 13:42:31] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:42:31] [INFO] [forum-scraper] Description extracted: 4405 chars, 0 images
+[2026-04-11 13:42:31] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:42:31] [INFO] [forum-scraper] Description extracted: 24215 chars, 5 images
+[2026-04-11 13:42:32] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:42:32] [INFO] [forum-scraper] Description extracted: 6309 chars, 0 images
+[2026-04-11 13:42:35] [INFO] Meta sync started
+[2026-04-11 13:42:54] [ERROR] Error occurred in handler for 'meta:sync': {"task":{"commands":["clone","--depth","1","https://github.com/KSP-CKAN/CKAN-meta.git","D:\\Roaming\\ksp-forge\\ckan-meta"],"format":"utf-8"}}
+[2026-04-11 13:42:54] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:42:54] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-11 13:42:54] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-11 13:51:37] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 13:51:40] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 13:51:40] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 13:51:40] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 13:51:40] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 13:51:40] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/211905-wip-1125-181-aset-consolidated-avionics-props-iva-packs/
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/189044-*
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/182898-nesds-warehouse-new-mod-ker-7/
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205504-atomictech-kerbalized-names-ksp-112x/
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/115288-*
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/130683-*
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/157353-122-ablative-airbrake-v010-5-march-2017/
+[2026-04-11 13:51:41] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/208044-111x-abort-packs-101/
+[2026-04-11 13:51:44] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:44] [INFO] [forum-scraper] Description extracted: 18272 chars, 14 images
+[2026-04-11 13:51:44] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:44] [INFO] [forum-scraper] Description extracted: 6375 chars, 6 images
+[2026-04-11 13:51:45] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:45] [INFO] [forum-scraper] Description extracted: 4093 chars, 1 images
+[2026-04-11 13:51:45] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:45] [INFO] [forum-scraper] Description extracted: 7248 chars, 6 images
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description extracted: 4219 chars, 0 images
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description extracted: 76671 chars, 23 images
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:46] [INFO] [forum-scraper] Description extracted: 6509 chars, 1 images
+[2026-04-11 13:51:47] [INFO] [forum-scraper] Description done: extracted via DOM
+[2026-04-11 13:51:47] [INFO] [forum-scraper] Description extracted: 5258 chars, 0 images
+[2026-04-11 13:52:02] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:52:04] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 13:52:04] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 13:52:04] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 13:52:05] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 13:52:05] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 13:52:05] [INFO] All windows closed, quitting
+[2026-04-11 20:19:03] [INFO] KSP Forge starting
+[2026-04-11 20:19:03] [INFO] Version: 0.5.0, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-11 20:19:03] [INFO] Initializing database...
+[2026-04-11 20:19:03] [INFO] Initializing services...
+[2026-04-11 20:19:04] [INFO] Registering IPC handlers...
+[2026-04-11 20:19:04] [INFO] Creating main window...
+[2026-04-11 20:19:04] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:19:04] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-11 20:19:04] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-11 20:19:09] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:19:09] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:19:09] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:19:09] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 20:19:11] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-11 20:19:29] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:19:33] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:19:34] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:19:34] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:19:34] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:19:36] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:19:38] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 20:19:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/178733-14x-action-group-manager-renewed/
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/167269-1
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/91023-*
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/153501-active-ablation-v101-122/
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:19:58] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/193362-actual-sites-airports-204-real-runways-for-rss-test-pilots-wanted/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/71673-*
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/144401-additional-progression-contracts-10-72316/&_fromLogin=1
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/205290-c1ustas-tufx-profiles/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/89874-105-adjustable-landing-gear-v120-masscost-scaling-tech-nodes-drag-may-30/&page=1
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/169087-131-adjustable-mod-panel/
+[2026-04-11 20:19:59] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/175359-*
+[2026-04-11 20:20:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/153501-active-ablation-v101-122/
+[2026-04-11 20:20:03] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:24] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:20:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:23:37] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:23:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:23:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:23:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:23:57] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 20:23:58] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/91023-*
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/153501-active-ablation-v101-122/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/53809-10release-5-0april-28-2015-active-texture-management-save-ram/
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: https://forum.kerbalspaceprogram.com/index.php?/topic/71673-*
+[2026-04-11 20:24:00] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/144401-additional-progression-contracts-10-72316/&_fromLogin=1
+[2026-04-11 20:24:02] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:14] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:24:16] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:24:16] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:24:16] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:24:16] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 20:24:17] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/index.php?/topic/84134-/
+[2026-04-11 20:24:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:22] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:23] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:25] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:34] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-11 20:24:38] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:24:38] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:24:38] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:24:38] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/108785-0-90-ADIOS-Tech-Tree-V-07-28-01-2015
+[2026-04-11 20:24:39] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:41] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:41] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:41] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:41] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:42] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:24:43] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/76241
+[2026-04-11 20:24:43] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/55462
+[2026-04-11 20:24:43] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/131059-1-0-x-A-visor-for-Valentina?p=2128292
+[2026-04-11 20:24:59] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:03] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:03] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:03] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:03] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:08] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:08] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:08] [INFO] [forum-scraper] Description done: timeout
+[2026-04-11 20:25:08] [INFO] All windows closed, quitting
+
+=== ksp-forge-2026-04-12.log ===
+[2026-04-12 14:54:23] [INFO] KSP Forge starting
+[2026-04-12 14:54:23] [INFO] Version: 0.5.2, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-12 14:54:23] [INFO] Initializing database...
+[2026-04-12 14:54:23] [INFO] Initializing services...
+[2026-04-12 14:54:23] [INFO] Registering IPC handlers...
+[2026-04-12 14:54:23] [INFO] Creating main window...
+[2026-04-12 14:54:24] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-12 14:54:40] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-12 14:55:03] [INFO] Meta sync started
+[2026-04-12 14:55:53] [INFO] Meta sync complete: 3704 mods indexed
+[2026-04-12 14:55:53] [INFO] [profile] Read CKAN registry from E:\steam\steamapps\common\Kerbal Space Program\CKAN\registry.json
+[2026-04-12 14:55:53] [ERROR] Error occurred in handler for 'profiles:scanInstalled': {}
+[2026-04-12 14:56:41] [INFO] Logs exported to D:\my doc\ksp-forge-logs.txt
+[2026-04-12 15:00:51] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-12 15:01:16] [INFO] [forum-scraper] Description done: timeout
+[2026-04-12 15:01:16] [INFO] All windows closed, quitting
+[2026-04-12 21:22:50] [INFO] KSP Forge starting
+[2026-04-12 21:22:50] [INFO] Version: 0.5.4, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-12 21:22:50] [INFO] Initializing database...
+[2026-04-12 21:22:50] [INFO] Initializing services...
+[2026-04-12 21:22:50] [INFO] Registering IPC handlers...
+[2026-04-12 21:22:50] [INFO] Creating main window...
+[2026-04-12 21:22:50] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-12 21:23:08] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-12 21:25:05] [INFO] Logs exported to D:\my doc\ksp-forge-logs.txt
+[2026-04-12 21:32:32] [INFO] All windows closed, quitting
+
+=== ksp-forge-2026-04-13.log ===
+[2026-04-13 12:28:34] [INFO] KSP Forge starting
+[2026-04-13 12:28:34] [INFO] Version: 0.5.5, Platform: win32, Arch: x64, Electron: 35.7.5, Node: 22.16.0
+[2026-04-13 12:28:34] [INFO] Initializing database...
+[2026-04-13 12:28:34] [INFO] Initializing services...
+[2026-04-13 12:28:35] [INFO] Registering IPC handlers...
+[2026-04-13 12:28:35] [INFO] Creating main window...
+[2026-04-13 12:28:42] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+[2026-04-13 12:29:00] [INFO] [forum-scraper] Description done: no content found after polling
+[2026-04-13 12:29:07] [INFO] [forum-scraper] Loading for description: http://forum.kerbalspaceprogram.com/threads/61040
+

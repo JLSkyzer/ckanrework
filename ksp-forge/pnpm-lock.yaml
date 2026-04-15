@@ -40,6 +40,9 @@ importers:
       simple-git:
         specifier: ^3.27.0
         version: 3.35.2
+      tar:
+        specifier: ^7.5.13
+        version: 7.5.13
       unzip-stream:
         specifier: ^0.3.4
         version: 0.3.4

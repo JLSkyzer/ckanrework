@@ -15,6 +15,7 @@ export default defineConfig({
       'marked',
       'dompurify',
       'semver',
+      'tar',
     ] })],
     build: {
       lib: {

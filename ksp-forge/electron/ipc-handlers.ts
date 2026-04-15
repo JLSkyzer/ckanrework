@@ -1,5 +1,6 @@
 import { ipcMain, dialog, BrowserWindow, shell } from 'electron'
 import fs from 'fs'
+import semver from 'semver'
 import type { SpaceDockCacheRow } from './types'
 import type { ImageScraperService } from './services/image-scraper'
 import type { DatabaseService } from './services/database'
@@ -323,7 +324,6 @@ export function registerIpcHandlers(services: Services): void {
       const latestTag = (data.tag_name || '').replace(/^v/, '')
       if (!latestTag) return null
       // Compare with semver: only notify if latest is GREATER than current
-      const semver = require('semver')
       if (semver.valid(latestTag) && semver.valid(currentVersion) && semver.gt(latestTag, currentVersion)) {
         return { currentVersion, latestVersion: latestTag, url: data.html_url }
       }
